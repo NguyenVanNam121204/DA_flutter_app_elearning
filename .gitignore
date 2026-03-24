@@ -1,0 +1,98 @@
+########################################
+# Full Stack .gitignore (Corrected for your Project)
+########################################
+
+# ===========================================
+# 1. HỆ ĐIỀU HÀNH & EDITOR (Rác hệ thống)
+# ===========================================
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
+.vs/
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.user
+*.userprefs
+
+# ===========================================
+# 2. BACKEND (.NET CORE)
+# ===========================================
+# Thư mục build (sinh ra khi chạy code)
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+publish/
+out/
+
+# File tạm và logs
+*.log
+*.tmp
+TestResults/
+*.coverage
+*.coveragexml
+
+# File Database thực tế (KHÔNG CHẶN CODE trong folder Data)
+*.mdf
+*.ldf
+*.db
+*.sqlite
+*.sqlite3
+
+# File cấu hình môi trường (Giữ lại .example hoặc file gốc)
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.Docker.json
+# Lưu ý: appsettings.json gốc vẫn được git theo dõi
+
+# ===========================================
+# 3. FRONTEND (REACTJS)
+# ===========================================
+# Thư viện tải về
+**/node_modules/
+
+# Thư mục build production
+**/build/
+**/dist/
+
+# File log npm/yarn
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# File môi trường (chứa key bảo mật)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+# Giữ lại .env.example
+
+# ===========================================
+# 4. DEVOPS & DOCKER
+# ===========================================
+# Chỉ chặn file cấu hình override (thường chứa setting riêng của máy cá nhân)
+docker-compose.override.yml
+
+# Chặn thư mục chứa data container (nếu bạn mount volume ra ngoài)
+# Nhưng KHÔNG chặn thư mục Data của code
+.dockerignore
+
+# ===========================================
+# 5. PROJECT SPECIFIC (Cụ thể cho dự án này)
+# ===========================================
+# Chặn file upload ảnh/tài liệu trong quá trình test (tránh nặng git)
+BackendELearningEnglish/LearningEnglish.API/wwwroot/uploads/*
+!BackendELearningEnglish/LearningEnglish.API/wwwroot/uploads/.gitkeep
+
+# ĐẢM BẢO KHÔNG CHẶN FOLDER CODE QUAN TRỌNG
+!BackendELearningEnglish/LearningEnglish.Infrastructure/Data/

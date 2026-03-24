@@ -12,7 +12,7 @@ class AppConfig {
       return env;
     }
 
-    return 'http://10.0.2.2:5030';
+    return 'http://localhost:5030';
   }
 
   static String get appEnv {

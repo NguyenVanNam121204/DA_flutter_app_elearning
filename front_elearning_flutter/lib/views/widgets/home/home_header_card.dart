@@ -30,7 +30,7 @@ class HomeHeaderCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Hôm nay học thêm 20 phút để giữ chuỗi streak nhé.',
+            'Hãy chăm chỉ học mỗi ngày để nâng cao kỹ năng nhé.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: Colors.white.withValues(alpha: 0.9),
             ),

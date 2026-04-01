@@ -1,6 +1,7 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'auth_primary_button.dart';
 
@@ -46,6 +47,22 @@ class _OtpVerifierFormState extends State<OtpVerifierForm> {
     super.initState();
     _remainingSeconds = widget.initialSeconds;
     _startTimer();
+    
+    for (int i = 0; i < _otpLength; i++) {
+      _focusNodes[i].onKeyEvent = (FocusNode node, KeyEvent event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.backspace) {
+          if (_controllers[i].text.isEmpty && i > 0) {
+            _focusNodes[i - 1].requestFocus();
+            // We can even clear the previous one for better UX:
+            // _controllers[i - 1].clear();
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      };
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_focusNodes.isNotEmpty) {
         _focusNodes.first.requestFocus();
@@ -110,6 +127,13 @@ class _OtpVerifierFormState extends State<OtpVerifierForm> {
   }
 
   void _handleChanged(String value, int index) {
+    if (value.isEmpty) {
+      if (index > 0) {
+        _focusNodes[index - 1].requestFocus();
+      }
+      return;
+    }
+
     final cleaned = value.replaceAll(RegExp(r'\D'), '');
     if (cleaned.isEmpty) {
       _controllers[index].clear();
@@ -117,12 +141,21 @@ class _OtpVerifierFormState extends State<OtpVerifierForm> {
     }
 
     final digit = cleaned.substring(cleaned.length - 1);
-    _controllers[index].text = digit;
+    
+    // Update text and keep cursor at the end
+    _controllers[index].value = TextEditingValue(
+      text: digit,
+      selection: const TextSelection.collapsed(offset: 1),
+    );
 
     if (index < _otpLength - 1) {
       _focusNodes[index + 1].requestFocus();
     } else {
       FocusScope.of(context).unfocus();
+      // Optional: auto submit when all filled
+      if (_controllers.every((c) => c.text.isNotEmpty)) {
+        _submit();
+      }
     }
   }
 

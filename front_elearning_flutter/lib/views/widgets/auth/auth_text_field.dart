@@ -59,6 +59,7 @@ class _AuthTextFieldState extends State<AuthTextField> {
           textInputAction: widget.textInputAction,
           validator: widget.validator,
           enabled: widget.enabled,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           decoration: InputDecoration(
             hintText: widget.hint,
             hintStyle: const TextStyle(color: Color(0xFF97A1B6)),

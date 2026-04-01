@@ -1,4 +1,4 @@
-﻿import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 
 import '../core/constants/api_constants.dart';
 import '../core/errors/app_error.dart';
@@ -49,7 +49,7 @@ class AuthRepository {
           'password': password,
           'phoneNumber': phoneNumber,
           'isMale': isMale,
-          'dateOfBirth': dateOfBirth?.toIso8601String(),
+          'dateOfBirth': dateOfBirth?.toUtc().toIso8601String(),
         },
       );
 

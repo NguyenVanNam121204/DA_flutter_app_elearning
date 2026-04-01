@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -26,6 +26,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _confirmPasswordController = TextEditingController();
   final _phoneController = TextEditingController();
   DateTime? _dateOfBirth;
+  String? _dateOfBirthError;
   String _gender = 'male';
   String? _successMessage;
 
@@ -41,7 +42,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
+    bool isValid = _formKey.currentState!.validate();
+
+    if (_dateOfBirth == null) {
+      setState(() {
+        _dateOfBirthError = 'Vui lòng chọn ngày sinh';
+      });
+      isValid = false;
+    }
+
+    if (!isValid) {
       return;
     }
 
@@ -86,6 +96,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     setState(() {
       _dateOfBirth = selected;
+      _dateOfBirthError = null;
     });
   }
 
@@ -227,13 +238,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: _pickDateOfBirth,
-              icon: const Icon(Icons.calendar_month_outlined),
+              style: _dateOfBirthError != null
+                  ? OutlinedButton.styleFrom(
+                      side: BorderSide(color: Theme.of(context).colorScheme.error),
+                    )
+                  : null,
+              icon: Icon(
+                Icons.calendar_month_outlined,
+                color: _dateOfBirthError != null ? Theme.of(context).colorScheme.error : null,
+              ),
               label: Text(
                 _dateOfBirth == null
                     ? 'Chọn ngày sinh'
                     : '${_dateOfBirth!.day.toString().padLeft(2, '0')}/${_dateOfBirth!.month.toString().padLeft(2, '0')}/${_dateOfBirth!.year}',
+                style: _dateOfBirthError != null
+                    ? TextStyle(color: Theme.of(context).colorScheme.error)
+                    : null,
               ),
             ),
+            if (_dateOfBirthError != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0, left: 16.0),
+                child: Text(
+                  _dateOfBirthError!,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
             const SizedBox(height: 14),
             Text(
               'Giới tính',

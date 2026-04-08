@@ -1,13 +1,16 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/providers.dart';
 import '../../../app/router/route_paths.dart';
-import '../../../core/result/result.dart';
+import '../../widgets/common/catalunya_card.dart';
+import '../../widgets/common/catalunya_scaffold.dart';
+import '../../widgets/common/empty_state_view.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({required this.keyword, super.key});
+
   final String keyword;
 
   @override
@@ -31,68 +34,74 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     super.dispose();
   }
 
-  Future<List<Map<String, dynamic>>> _search() async {
-    if (_keyword.trim().isEmpty) return const [];
-    final result = await ref.read(lessonFeatureViewModelProvider).searchCourses(_keyword.trim());
-    return switch (result) {
-      Success(:final value) => value,
-      Failure(:final error) => throw Exception(error.message),
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Search')),
+    final asyncItems = ref.watch(searchCoursesProvider(_keyword));
+
+    return CatalunyaScaffold(
+      appBar: AppBar(title: const Text('TÃ¬m khÃ³a há»c')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      hintText: 'Nhap ten khoa hoc...',
-                      border: OutlineInputBorder(),
+            CatalunyaCard(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: const InputDecoration(
+                        hintText: 'Nháº­p tÃªn khÃ³a há»c...',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.search_rounded),
+                      ),
+                      onSubmitted: (value) => setState(() => _keyword = value),
                     ),
-                    onSubmitted: (value) => setState(() => _keyword = value),
                   ),
-                ),
-                const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: () => setState(() => _keyword = _controller.text),
-                  child: const Text('Tim'),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  FilledButton.icon(
+                    onPressed: () {
+                      setState(() => _keyword = _controller.text.trim());
+                    },
+                    icon: const Icon(Icons.tune_rounded, size: 18),
+                    label: const Text('TÃ¬m'),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: _search(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    if (snapshot.hasError) return Center(child: Text('${snapshot.error}'));
-                    return const Center(child: CircularProgressIndicator());
+              child: asyncItems.when(
+                data: (items) {
+                  if (items.isEmpty) {
+                    return const Center(
+                      child: EmptyStateView(
+                        message: 'KhÃ´ng cÃ³ káº¿t quáº£ phÃ¹ há»£p',
+                        icon: Icons.search_off_rounded,
+                      ),
+                    );
                   }
-                  final items = snapshot.data!;
-                  if (items.isEmpty) return const Center(child: Text('Khong co ket qua'));
                   return ListView.separated(
                     itemCount: items.length,
-                    separatorBuilder: (_, _) => const Divider(height: 1),
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final item = items[index];
-                      final title = (item['title'] ?? item['Title'] ?? 'Course').toString();
-                      final id = (item['courseId'] ?? item['CourseId'] ?? '').toString();
-                      return ListTile(
-                        title: Text(title),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('${RoutePaths.courseDetail}?courseId=$id'),
+                      return CatalunyaCard(
+                        child: ListTile(
+                          title: Text(item.title),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () {
+                            context.push(
+                              '${RoutePaths.courseDetail}?courseId=${item.courseId}',
+                            );
+                          },
+                        ),
                       );
                     },
                   );
                 },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, _) => Center(child: Text('$error')),
               ),
             ),
           ],
@@ -101,3 +110,4 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 }
+

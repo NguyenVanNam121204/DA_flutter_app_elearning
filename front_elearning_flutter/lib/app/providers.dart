@@ -1,26 +1,51 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/result/result.dart';
 import '../core/logger/app_logger.dart';
-import '../repositories/api_data_repository.dart';
-import '../repositories/auth_repository.dart';
-import '../repositories/home_repository.dart';
+import '../models/assignment/assignment_models.dart';
+import '../models/learning/course_models.dart';
+import '../models/learning/lecture_models.dart';
+import '../models/learning/lesson_models.dart';
+import '../models/learning/pronunciation_models.dart';
+import '../models/payment/payment_models.dart';
+import '../models/teacher/teacher_course_models.dart';
+import '../models/teacher/teacher_quiz_attempt_models.dart';
+import '../models/teacher/teacher_submission_models.dart';
+import '../repositories/assignment/assignment_repository.dart';
+import '../repositories/auth/auth_repository.dart';
+import '../repositories/flashcard/flashcard_repository.dart';
+import '../repositories/home/home_repository.dart';
+import '../repositories/learning/course_repository.dart';
+import '../repositories/learning/lecture_repository.dart';
+import '../repositories/learning/learning_repository.dart';
+import '../repositories/learning/lesson_repository.dart';
+import '../repositories/learning/pronunciation_repository.dart';
+import '../repositories/notification/notification_repository.dart';
+import '../repositories/payment/payment_repository.dart';
+import '../repositories/profile/profile_repository.dart';
+import '../repositories/quiz/quiz_repository.dart';
+import '../repositories/teacher/teacher_repository.dart';
 import '../services/api_service.dart';
 import '../services/auth_interceptor.dart';
 import '../services/auth_session_service.dart';
 import '../services/secure_storage_service.dart';
-import '../viewmodels/api_data_viewmodel.dart';
-import '../viewmodels/auth_viewmodel.dart';
-import '../viewmodels/flashcard_feature_viewmodel.dart';
-import '../viewmodels/flashcard_learning_viewmodel.dart';
-import '../viewmodels/flashcard_review_session_viewmodel.dart';
-import '../viewmodels/home_viewmodel.dart';
-import '../viewmodels/lesson_feature_viewmodel.dart';
-import '../viewmodels/payment_feature_viewmodel.dart';
-import '../viewmodels/payment_screen_viewmodel.dart';
-import '../viewmodels/teacher_feature_viewmodel.dart';
-import '../viewmodels/teacher_create_course_viewmodel.dart';
-import '../viewmodels/quiz_screen_viewmodel.dart';
+import '../viewmodels/auth/auth_viewmodel.dart';
+import '../viewmodels/flashcard/flashcard_feature_viewmodel.dart';
+import '../viewmodels/flashcard/flashcard_learning_viewmodel.dart';
+import '../viewmodels/flashcard/flashcard_review_session_viewmodel.dart';
+import '../viewmodels/home/home_viewmodel.dart';
+import '../viewmodels/learning/learning_feature_viewmodel.dart';
+import '../viewmodels/learning/lesson_feature_viewmodel.dart';
+import '../viewmodels/notification/notification_feature_viewmodel.dart';
+import '../viewmodels/notification/notification_screen_viewmodel.dart';
+import '../viewmodels/payment/payment_feature_viewmodel.dart';
+import '../viewmodels/payment/payment_screen_viewmodel.dart';
+import '../viewmodels/profile/profile_feature_viewmodel.dart';
+import '../viewmodels/teacher/teacher_feature_viewmodel.dart';
+import '../viewmodels/teacher/teacher_create_course_viewmodel.dart';
+import '../viewmodels/quiz/quiz_screen_viewmodel.dart';
+import '../viewmodels/assignment/assignment_feature_viewmodel.dart';
 import 'config/app_config.dart';
 
 final secureStorageProvider = Provider<SecureStorageService>((ref) {
@@ -91,29 +116,374 @@ final homeRepositoryProvider = Provider<HomeRepository>((ref) {
   return HomeRepository(ref.read(apiServiceProvider));
 });
 
-final _apiDataRepositorySourceProvider = Provider<ApiDataRepository>((ref) {
-  return ApiDataRepository(ref.read(apiServiceProvider));
+final assignmentRepositoryProvider = Provider<AssignmentRepository>((ref) {
+  return AssignmentRepository(ref.read(apiServiceProvider));
 });
 
-final apiDataViewModelProvider = Provider<ApiDataViewModel>((ref) {
-  return ApiDataViewModel(ref.read(_apiDataRepositorySourceProvider));
+final learningRepositoryProvider = Provider<LearningRepository>((ref) {
+  return LearningRepository(ref.read(apiServiceProvider));
+});
+
+final lessonRepositoryProvider = Provider<LessonRepository>((ref) {
+  return LessonRepository(ref.read(apiServiceProvider));
+});
+
+final courseRepositoryProvider = Provider<CourseRepository>((ref) {
+  return CourseRepository(ref.read(apiServiceProvider));
+});
+
+final lectureRepositoryProvider = Provider<LectureRepository>((ref) {
+  return LectureRepository(ref.read(apiServiceProvider));
+});
+
+final pronunciationRepositoryProvider = Provider<PronunciationRepository>((
+  ref,
+) {
+  return PronunciationRepository(ref.read(apiServiceProvider));
+});
+
+final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
+  return ProfileRepository(ref.read(apiServiceProvider));
+});
+
+final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
+  return NotificationRepository(ref.read(apiServiceProvider));
+});
+
+final paymentRepositoryProvider = Provider<PaymentRepository>((ref) {
+  return PaymentRepository(ref.read(apiServiceProvider));
+});
+
+final teacherRepositoryProvider = Provider<TeacherRepository>((ref) {
+  return TeacherRepository(ref.read(apiServiceProvider));
+});
+
+final flashcardRepositoryProvider = Provider<FlashcardRepository>((ref) {
+  return FlashcardRepository(ref.read(apiServiceProvider));
+});
+
+final quizRepositoryProvider = Provider<QuizRepository>((ref) {
+  return QuizRepository(ref.read(apiServiceProvider));
 });
 
 final lessonFeatureViewModelProvider = Provider<LessonFeatureViewModel>((ref) {
-  return LessonFeatureViewModel(ref.read(apiDataViewModelProvider));
+  return LessonFeatureViewModel(
+    ref.read(courseRepositoryProvider),
+    ref.read(lessonRepositoryProvider),
+    ref.read(lectureRepositoryProvider),
+    ref.read(pronunciationRepositoryProvider),
+  );
 });
 
-final paymentFeatureViewModelProvider = Provider<PaymentFeatureViewModel>((ref) {
-  return PaymentFeatureViewModel(ref.read(apiDataViewModelProvider));
+final learningFeatureViewModelProvider = Provider<LearningFeatureViewModel>((
+  ref,
+) {
+  return LearningFeatureViewModel(ref.read(learningRepositoryProvider));
 });
 
-final teacherFeatureViewModelProvider = Provider<TeacherFeatureViewModel>((ref) {
-  return TeacherFeatureViewModel(ref.read(apiDataViewModelProvider));
+final profileFeatureViewModelProvider = Provider<ProfileFeatureViewModel>((
+  ref,
+) {
+  return ProfileFeatureViewModel(ref.read(profileRepositoryProvider));
 });
 
-final flashcardFeatureViewModelProvider = Provider<FlashcardFeatureViewModel>((ref) {
-  return FlashcardFeatureViewModel(ref.read(apiDataViewModelProvider));
+final notificationFeatureViewModelProvider =
+    Provider<NotificationFeatureViewModel>((ref) {
+      return NotificationFeatureViewModel(
+        ref.read(notificationRepositoryProvider),
+      );
+    });
+
+final assignmentFeatureViewModelProvider = Provider<AssignmentFeatureViewModel>(
+  (ref) {
+    return AssignmentFeatureViewModel(ref.read(assignmentRepositoryProvider));
+  },
+);
+
+final paymentFeatureViewModelProvider = Provider<PaymentFeatureViewModel>((
+  ref,
+) {
+  return PaymentFeatureViewModel(ref.read(paymentRepositoryProvider));
 });
+
+final teacherFeatureViewModelProvider = Provider<TeacherFeatureViewModel>((
+  ref,
+) {
+  return TeacherFeatureViewModel(ref.read(teacherRepositoryProvider));
+});
+
+final flashcardFeatureViewModelProvider = Provider<FlashcardFeatureViewModel>((
+  ref,
+) {
+  return FlashcardFeatureViewModel(ref.read(flashcardRepositoryProvider));
+});
+
+final vocabularyListProvider =
+    FutureProvider.autoDispose<List<LearningVocabularyItem>>((ref) async {
+      final result = await ref
+          .read(learningFeatureViewModelProvider)
+          .notebookVocabulary();
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final myCoursesListProvider =
+    FutureProvider.autoDispose<List<LearningCourseItem>>((ref) async {
+      final result = await ref
+          .read(learningFeatureViewModelProvider)
+          .myCourses(pageNumber: 1, pageSize: 20);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final profileDataProvider = FutureProvider.autoDispose<UserProfileModel>((
+  ref,
+) async {
+  final result = await ref.read(profileFeatureViewModelProvider).profile();
+  return switch (result) {
+    Success(:final value) => value,
+    Failure(:final error) => throw Exception(error.message),
+  };
+});
+
+final searchCoursesProvider = FutureProvider.autoDispose
+    .family<List<LearningCourseItem>, String>((ref, keyword) async {
+      if (keyword.trim().isEmpty) {
+        return const [];
+      }
+      final result = await ref
+          .read(lessonFeatureViewModelProvider)
+          .searchCourses(keyword.trim());
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final courseDetailDataProvider = FutureProvider.autoDispose
+    .family<CourseDetailModel, String>((ref, courseId) async {
+      final result = await ref
+          .read(lessonFeatureViewModelProvider)
+          .courseDetail(courseId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final lessonsByCourseProvider = FutureProvider.autoDispose
+    .family<List<LessonListItemModel>, String>((ref, courseId) async {
+      final result = await ref
+          .read(lessonFeatureViewModelProvider)
+          .lessonsByCourse(courseId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final lessonDetailBundleProvider = FutureProvider.autoDispose
+    .family<LessonDetailBundleModel, String>((ref, lessonId) async {
+      final result = await ref
+          .read(lessonFeatureViewModelProvider)
+          .lessonDetailBundle(lessonId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final moduleLecturesProvider = FutureProvider.autoDispose
+    .family<List<LectureListItemModel>, String>((ref, moduleId) async {
+      final result = await ref
+          .read(lessonFeatureViewModelProvider)
+          .moduleLectures(moduleId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final lectureDetailProvider = FutureProvider.autoDispose
+    .family<LectureDetailModel, String>((ref, lectureId) async {
+      final result = await ref
+          .read(lessonFeatureViewModelProvider)
+          .lectureDetail(lectureId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final pronunciationListProvider = FutureProvider.autoDispose
+    .family<List<PronunciationItemModel>, String>((ref, moduleId) async {
+      final result = await ref
+          .read(lessonFeatureViewModelProvider)
+          .pronunciationList(moduleId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final pronunciationDetailProvider = FutureProvider.autoDispose
+    .family<PronunciationDetailModel, String>((ref, pronunciationId) async {
+      final result = await ref
+          .read(lessonFeatureViewModelProvider)
+          .pronunciationDetail(pronunciationId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final lessonResultProvider = FutureProvider.autoDispose
+    .family<LessonResultModel, String>((ref, attemptId) async {
+      final result = await ref
+          .read(lessonFeatureViewModelProvider)
+          .lessonResult(attemptId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final assignmentDetailProvider = FutureProvider.autoDispose
+    .family<AssignmentDetailModel, String>((ref, combinedArg) async {
+      final split = combinedArg.split('::');
+      final assessmentId = split.isNotEmpty ? split.first : '';
+      final moduleId = split.length > 1 ? split[1] : '';
+      final result = await ref
+          .read(assignmentFeatureViewModelProvider)
+          .assignmentDetail(assessmentId: assessmentId, moduleId: moduleId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final essayDetailProvider = FutureProvider.autoDispose
+    .family<EssayDetailModel, String>((ref, essayId) async {
+      final result = await ref
+          .read(assignmentFeatureViewModelProvider)
+          .essayDetail(essayId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final paymentHistoryDataProvider =
+    FutureProvider.autoDispose<List<PaymentHistoryItemModel>>((ref) async {
+      final result = await ref
+          .read(paymentFeatureViewModelProvider)
+          .paymentHistory();
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final teacherMyCoursesDataProvider =
+    FutureProvider.autoDispose<List<TeacherCourseModel>>((ref) async {
+      final result = await ref
+          .read(teacherFeatureViewModelProvider)
+          .myCourses();
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final teacherCourseDetailDataProvider = FutureProvider.autoDispose
+    .family<TeacherCourseModel, String>((ref, courseId) async {
+      final result = await ref
+          .read(teacherFeatureViewModelProvider)
+          .courseDetail(courseId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final teacherClassStudentsDataProvider = FutureProvider.autoDispose
+    .family<List<TeacherClassStudentModel>, String>((ref, courseId) async {
+      final result = await ref
+          .read(teacherFeatureViewModelProvider)
+          .classStudents(courseId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final teacherLessonDetailDataProvider = FutureProvider.autoDispose
+    .family<TeacherLessonDetailModel, String>((ref, lessonId) async {
+      final result = await ref
+          .read(teacherFeatureViewModelProvider)
+          .lessonDetail(lessonId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final teacherEssaySubmissionsDataProvider = FutureProvider.autoDispose
+    .family<List<TeacherSubmissionListItemModel>, String>((ref, essayId) async {
+      final result = await ref
+          .read(teacherFeatureViewModelProvider)
+          .essaySubmissions(essayId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final teacherQuizAttemptsDataProvider = FutureProvider.autoDispose
+    .family<List<TeacherQuizAttemptListItemModel>, String>((ref, quizId) async {
+      final result = await ref
+          .read(teacherFeatureViewModelProvider)
+          .quizAttempts(quizId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final teacherQuizAttemptDetailDataProvider = FutureProvider.autoDispose
+    .family<TeacherQuizAttemptDetailModel, String>((ref, attemptId) async {
+      final result = await ref
+          .read(teacherFeatureViewModelProvider)
+          .quizAttemptDetail(attemptId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final teacherSubmissionDetailDataProvider = FutureProvider.autoDispose
+    .family<TeacherSubmissionDetailModel, String>((ref, submissionId) async {
+      final result = await ref
+          .read(teacherFeatureViewModelProvider)
+          .submissionDetail(submissionId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
+final notificationScreenViewModelProvider =
+    StateNotifierProvider<NotificationScreenViewModel, NotificationScreenState>(
+      (ref) {
+        return NotificationScreenViewModel(
+          ref.read(notificationFeatureViewModelProvider),
+        );
+      },
+    );
 
 final authViewModelProvider = StateNotifierProvider<AuthViewModel, AuthState>((
   ref,
@@ -131,37 +501,60 @@ final homeViewModelProvider = StateNotifierProvider<HomeViewModel, HomeState>((
   return HomeViewModel(ref.read(homeRepositoryProvider));
 });
 
-final quizScreenViewModelProvider = StateNotifierProvider.family<
-    QuizScreenViewModel, QuizScreenState, String>((ref, quizId) {
-  final vm = QuizScreenViewModel(ref.read(apiDataViewModelProvider));
-  vm.initialize(quizId);
-  return vm;
-});
+final quizScreenViewModelProvider =
+    StateNotifierProvider.family<QuizScreenViewModel, QuizScreenState, String>((
+      ref,
+      quizId,
+    ) {
+      final vm = QuizScreenViewModel(ref.read(quizRepositoryProvider));
+      vm.initialize(quizId);
+      return vm;
+    });
 
-final paymentScreenViewModelProvider = StateNotifierProvider.family<
-    PaymentScreenViewModel, PaymentScreenState, PaymentScreenArgs>((ref, args) {
-  final vm = PaymentScreenViewModel(ref.read(paymentFeatureViewModelProvider));
-  vm.initialize(args);
-  return vm;
-});
+final paymentScreenViewModelProvider =
+    StateNotifierProvider.family<
+      PaymentScreenViewModel,
+      PaymentScreenState,
+      PaymentScreenArgs
+    >((ref, args) {
+      final vm = PaymentScreenViewModel(
+        ref.read(paymentFeatureViewModelProvider),
+      );
+      vm.initialize(args);
+      return vm;
+    });
 
-final flashcardLearningViewModelProvider = StateNotifierProvider.family<
-    FlashcardLearningViewModel, FlashcardLearningState, String>((ref, lessonId) {
-  final vm = FlashcardLearningViewModel(ref.read(flashcardFeatureViewModelProvider));
-  vm.initialize(lessonId);
-  return vm;
-});
+final flashcardLearningViewModelProvider =
+    StateNotifierProvider.family<
+      FlashcardLearningViewModel,
+      FlashcardLearningState,
+      String
+    >((ref, lessonId) {
+      final vm = FlashcardLearningViewModel(
+        ref.read(flashcardFeatureViewModelProvider),
+      );
+      vm.initialize(lessonId);
+      return vm;
+    });
 
-final flashcardReviewSessionViewModelProvider = StateNotifierProvider<
-    FlashcardReviewSessionViewModel, FlashcardReviewSessionState>((ref) {
-  final vm =
-      FlashcardReviewSessionViewModel(ref.read(flashcardFeatureViewModelProvider));
-  vm.initialize();
-  return vm;
-});
+final flashcardReviewSessionViewModelProvider =
+    StateNotifierProvider<
+      FlashcardReviewSessionViewModel,
+      FlashcardReviewSessionState
+    >((ref) {
+      final vm = FlashcardReviewSessionViewModel(
+        ref.read(flashcardFeatureViewModelProvider),
+      );
+      vm.initialize();
+      return vm;
+    });
 
-final teacherCreateCourseViewModelProvider = StateNotifierProvider<
-    TeacherCreateCourseViewModel, TeacherCreateCourseState>((ref) {
-  return TeacherCreateCourseViewModel(ref.read(teacherFeatureViewModelProvider));
-});
-
+final teacherCreateCourseViewModelProvider =
+    StateNotifierProvider<
+      TeacherCreateCourseViewModel,
+      TeacherCreateCourseState
+    >((ref) {
+      return TeacherCreateCourseViewModel(
+        ref.read(teacherFeatureViewModelProvider),
+      );
+    });

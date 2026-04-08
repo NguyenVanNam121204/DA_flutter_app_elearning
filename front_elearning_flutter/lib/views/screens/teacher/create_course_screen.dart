@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -62,7 +62,9 @@ class _CreateCourseScreenState extends ConsumerState<CreateCourseScreen> {
                 border: OutlineInputBorder(),
               ),
               validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Vui long nhap ten lop hoc';
+                if (v == null || v.trim().isEmpty) {
+                  return 'Vui lòng nhập tên lớp học';
+                }
                 if (v.trim().length < 3) return 'Ten qua ngan';
                 return null;
               },
@@ -79,7 +81,7 @@ class _CreateCourseScreenState extends ConsumerState<CreateCourseScreen> {
               ),
               validator: (v) {
                 final n = int.tryParse((v ?? '').trim());
-                if (n == null || n < 0) return 'Gia tri khong hop le';
+                if (n == null || n < 0) return 'Giá trị không hợp lệ';
                 return null;
               },
             ),
@@ -96,7 +98,7 @@ class _CreateCourseScreenState extends ConsumerState<CreateCourseScreen> {
                 final s = (v ?? '').trim();
                 if (s.isEmpty) return null;
                 if (!s.startsWith('http://') && !s.startsWith('https://')) {
-                  return 'URL khong hop le';
+                  return 'URL không hợp lệ';
                 }
                 return null;
               },
@@ -105,7 +107,10 @@ class _CreateCourseScreenState extends ConsumerState<CreateCourseScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Mo ta lop hoc', style: TextStyle(fontWeight: FontWeight.w700)),
+                const Text(
+                  'Mo ta lop hoc',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
                 TextButton(
                   onPressed: notifier.togglePreview,
                   child: Text(state.preview ? 'Sua' : 'Xem truoc'),
@@ -121,7 +126,9 @@ class _CreateCourseScreenState extends ConsumerState<CreateCourseScreen> {
                   color: Colors.grey.shade50,
                 ),
                 child: Text(
-                  _description.text.trim().isEmpty ? 'Chua co noi dung mo ta' : _description.text.trim(),
+                  _description.text.trim().isEmpty
+                      ? 'Chua co noi dung mo ta'
+                      : _description.text.trim(),
                 ),
               )
             else
@@ -135,7 +142,9 @@ class _CreateCourseScreenState extends ConsumerState<CreateCourseScreen> {
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Vui long nhap mo ta';
+                  if (v == null || v.trim().isEmpty) {
+                    return 'Vui lòng nhập mô tả';
+                  }
                   return null;
                 },
               ),
@@ -155,7 +164,7 @@ class _CreateCourseScreenState extends ConsumerState<CreateCourseScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.add),
-              label: Text(state.saving ? 'Dang tao...' : 'Tao lop hoc ngay'),
+              label: Text(state.saving ? 'Đang tạo...' : 'Tạo lớp học ngay'),
             ),
           ],
         ),

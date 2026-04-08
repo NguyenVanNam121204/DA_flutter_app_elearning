@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,7 +12,8 @@ import '../../widgets/auth/auth_text_field.dart';
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -32,7 +33,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         .forgotPassword(_emailController.text.trim());
     if (!mounted || !ok) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Ma OTP da duoc gui. Vui long kiem tra email.')),
+      const SnackBar(
+        content: Text('Mã OTP đã được gửi. Vui lòng kiểm tra email.'),
+      ),
     );
     final email = Uri.encodeComponent(_emailController.text.trim());
     context.go('${RoutePaths.verifyResetOtp}?email=$email');
@@ -42,8 +45,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
     return AuthShell(
-      title: 'Quen mat khau',
-      subtitle: 'Nhap email de nhan huong dan dat lai mat khau.',
+      title: 'Quên mật khẩu',
+      subtitle: 'Nhập email để nhận hướng dẫn đặt lại mật khẩu.',
       child: Form(
         key: _formKey,
         child: Column(
@@ -60,15 +63,17 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
                 final email = (value ?? '').trim();
-                if (email.isEmpty) return 'Vui long nhap email';
-                final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
-                if (!ok) return 'Email khong hop le';
+                if (email.isEmpty) return 'Vui lòng nhập email';
+                final ok = RegExp(
+                  r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                ).hasMatch(email);
+                if (!ok) return 'Email không hợp lệ';
                 return null;
               },
             ),
             const SizedBox(height: 20),
             AuthPrimaryButton(
-              label: 'Gui ma OTP',
+              label: 'Gửi mã OTP',
               isLoading: authState.isLoading,
               onPressed: _submit,
             ),

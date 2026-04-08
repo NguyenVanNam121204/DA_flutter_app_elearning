@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -33,7 +33,7 @@ class _VerifyEmailOtpScreenState extends ConsumerState<VerifyEmailOtpScreen> {
     final authState = ref.watch(authViewModelProvider);
     return AuthShell(
       title: 'Xac thuc email',
-      subtitle: 'Nhap ma OTP 6 so da gui den ${widget.email}',
+      subtitle: 'Nhập mã OTP 6 số đã gửi đến ${widget.email}',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -51,3 +51,4 @@ class _VerifyEmailOtpScreenState extends ConsumerState<VerifyEmailOtpScreen> {
     );
   }
 }
+

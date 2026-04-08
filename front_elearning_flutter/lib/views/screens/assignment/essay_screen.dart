@@ -1,8 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers.dart';
 import '../../../core/result/result.dart';
+import '../../widgets/common/catalunya_card.dart';
+import '../../widgets/common/catalunya_scaffold.dart';
+import '../../widgets/common/state_views.dart';
 
 class EssayScreen extends ConsumerStatefulWidget {
   const EssayScreen({required this.essayId, super.key});
@@ -16,34 +19,16 @@ class _EssayScreenState extends ConsumerState<EssayScreen> {
   final _controller = TextEditingController();
   bool _submitting = false;
 
-  Future<Map<String, dynamic>> _loadEssay() async {
-    final result = await ref.read(apiDataViewModelProvider).get('/api/user/essays/${widget.essayId}');
-    return switch (result) {
-      Success(:final value) => _asMap(value),
-      Failure(:final error) => throw Exception(error.message),
-    };
-  }
-
-  Map<String, dynamic> _asMap(dynamic raw) {
-    if (raw is Map<String, dynamic>) {
-      final data = raw['data'] ?? raw['Data'] ?? raw;
-      if (data is Map<String, dynamic>) return data;
-      return raw;
-    }
-    return const {};
-  }
-
   Future<void> _submit() async {
     if (_controller.text.trim().isEmpty) return;
     setState(() => _submitting = true);
-    final result = await ref.read(apiDataViewModelProvider).post(
-      '/api/user/essay-submissions',
-      body: {'essayId': widget.essayId, 'content': _controller.text.trim()},
-    );
+    final result = await ref
+        .read(assignmentFeatureViewModelProvider)
+        .submitEssay(essayId: widget.essayId, content: _controller.text.trim());
     setState(() => _submitting = false);
     if (!mounted) return;
     final msg = switch (result) {
-      Success() => 'Nop bai thanh cong',
+      Success() => 'Nộp bài thành công',
       Failure(:final error) => error.message,
     };
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
@@ -57,41 +42,39 @@ class _EssayScreenState extends ConsumerState<EssayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Essay')),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _loadEssay(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            if (snapshot.hasError) return Center(child: Text('${snapshot.error}'));
-            return const Center(child: CircularProgressIndicator());
-          }
-          final essay = snapshot.data!;
-          final title = (essay['title'] ?? essay['Title'] ?? 'Essay').toString();
-          final instruction = (essay['instruction'] ?? essay['Instruction'] ?? '').toString();
+    final asyncEssay = ref.watch(essayDetailProvider(widget.essayId));
+    return CatalunyaScaffold(
+      appBar: AppBar(title: const Text('Bài tự luận')),
+      body: asyncEssay.when(
+        data: (essay) {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text(title, style: Theme.of(context).textTheme.headlineSmall),
+              Text(
+                essay.title,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
               const SizedBox(height: 8),
-              Text(instruction),
+              CatalunyaCard(child: Text(essay.instruction)),
               const SizedBox(height: 12),
               TextField(
                 controller: _controller,
                 maxLines: 8,
                 decoration: const InputDecoration(
-                  labelText: 'Noi dung bai lam',
+                  labelText: 'Nội dung bài làm',
                   border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: _submitting ? null : _submit,
-                child: Text(_submitting ? 'Dang nop...' : 'Nop bai'),
+                child: Text(_submitting ? 'Đang nộp...' : 'Nộp bài'),
               ),
             ],
           );
         },
+        loading: () => const LoadingStateView(),
+        error: (error, _) => ErrorStateView(message: '$error'),
       ),
     );
   }

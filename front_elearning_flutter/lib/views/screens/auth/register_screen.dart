@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -42,11 +42,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Future<void> _submit() async {
     var isValid = _formKey.currentState!.validate();
     if (_dateOfBirth == null) {
-      setState(() => _dateOfBirthError = 'Vui long chon ngay sinh');
+      setState(() => _dateOfBirthError = 'Vui lòng chọn ngày sinh');
       isValid = false;
     }
     if (!isValid) return;
-    final ok = await ref.read(authViewModelProvider.notifier).register(
+    final ok = await ref
+        .read(authViewModelProvider.notifier)
+        .register(
           firstName: _firstNameController.text.trim(),
           lastName: _lastNameController.text.trim(),
           email: _emailController.text.trim(),
@@ -58,7 +60,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     if (!mounted) return;
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Dang ky thanh cong. Vui long xac thuc email.')),
+        const SnackBar(
+          content: Text('Đăng ký thành công. Vui lòng xác thực email.'),
+        ),
       );
       final email = Uri.encodeComponent(_emailController.text.trim());
       context.go('${RoutePaths.verifyEmailOtp}?email=$email');
@@ -108,7 +112,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               label: 'Ho',
               hint: 'Nguyen',
               validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Vui long nhap ho';
+                if (v == null || v.trim().isEmpty) return 'Vui lòng nhập họ';
                 return null;
               },
             ),
@@ -118,7 +122,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               label: 'Ten',
               hint: 'Van A',
               validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Vui long nhap ten';
+                if (v == null || v.trim().isEmpty) return 'Vui lòng nhập tên';
                 return null;
               },
             ),
@@ -130,35 +134,39 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
                 final email = (value ?? '').trim();
-                if (email.isEmpty) return 'Vui long nhap email';
-                final ok = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email);
-                if (!ok) return 'Email khong hop le';
+                if (email.isEmpty) return 'Vui lòng nhập email';
+                final ok = RegExp(
+                  r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                ).hasMatch(email);
+                if (!ok) return 'Email không hợp lệ';
                 return null;
               },
             ),
             const SizedBox(height: 14),
             AuthTextField(
               controller: _passwordController,
-              label: 'Mat khau',
-              hint: 'Toi thieu 6 ky tu',
+              label: 'Mật khẩu',
+              hint: 'Tối thiểu 6 ký tự',
               obscureText: true,
               validator: (v) {
                 final p = (v ?? '').trim();
-                if (p.isEmpty) return 'Vui long nhap mat khau';
-                if (p.length < 6) return 'Mat khau toi thieu 6 ky tu';
+                if (p.isEmpty) return 'Vui lòng nhập mật khẩu';
+                if (p.length < 6) return 'Mật khẩu tối thiểu 6 ký tự';
                 return null;
               },
             ),
             const SizedBox(height: 14),
             AuthTextField(
               controller: _confirmPasswordController,
-              label: 'Xac nhan mat khau',
-              hint: 'Nhap lai mat khau',
+              label: 'Xác nhận mật khẩu',
+              hint: 'Nhập lại mật khẩu',
               obscureText: true,
               validator: (v) {
-                if ((v ?? '').trim().isEmpty) return 'Vui long nhap lai mat khau';
+                if ((v ?? '').trim().isEmpty) {
+                  return 'Vui lòng nhập lại mật khẩu';
+                }
                 if (v!.trim() != _passwordController.text.trim()) {
-                  return 'Mat khau xac nhan khong khop';
+                  return 'Mật khẩu xác nhận không khớp';
                 }
                 return null;
               },
@@ -166,13 +174,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             const SizedBox(height: 14),
             AuthTextField(
               controller: _phoneController,
-              label: 'So dien thoai',
+              label: 'Số điện thoại',
               hint: '0xxxxxxxxx',
               keyboardType: TextInputType.phone,
               validator: (v) {
                 final phone = (v ?? '').trim();
-                if (phone.isEmpty) return 'Vui long nhap so dien thoai';
-                if (!RegExp(r'^[0-9]{9,11}$').hasMatch(phone)) return 'So dien thoai khong hop le';
+                if (phone.isEmpty) return 'Vui lòng nhập số điện thoại';
+                if (!RegExp(r'^[0-9]{9,11}$').hasMatch(phone)) {
+                  return 'Số điện thoại không hợp lệ';
+                }
                 return null;
               },
             ),
@@ -189,20 +199,30 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               onChanged: (v) => setState(() => _gender = v ?? 'male'),
               child: const Row(
                 children: [
-                  Expanded(child: RadioListTile<String>(value: 'male', title: Text('Nam'))),
-                  Expanded(child: RadioListTile<String>(value: 'female', title: Text('Nu'))),
+                  Expanded(
+                    child: RadioListTile<String>(
+                      value: 'male',
+                      title: Text('Nam'),
+                    ),
+                  ),
+                  Expanded(
+                    child: RadioListTile<String>(
+                      value: 'female',
+                      title: Text('Nu'),
+                    ),
+                  ),
                 ],
               ),
             ),
             AuthPrimaryButton(
-              label: 'Dang ky',
+              label: 'Đăng ký',
               isLoading: authState.isLoading,
               onPressed: _submit,
             ),
             const SizedBox(height: 12),
             AuthSwitchLink(
               question: 'Da co tai khoan?',
-              actionLabel: 'Dang nhap',
+              actionLabel: 'Đăng nhập',
               onTap: () => context.go(RoutePaths.login),
             ),
           ],

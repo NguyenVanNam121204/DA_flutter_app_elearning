@@ -33,7 +33,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final ok = await ref.read(authViewModelProvider.notifier).login(
+    final ok = await ref
+        .read(authViewModelProvider.notifier)
+        .login(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
@@ -47,8 +49,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authViewModelProvider);
 
     return AuthShell(
-      title: 'Chao mung tro lai',
-      subtitle: 'Dang nhap de tiep tuc hanh trinh hoc tieng Anh.',
+      title: 'Chào mừng trở lại',
+      subtitle: 'Đăng nhập để tiếp tục hành trình học tiếng Anh.',
       child: Form(
         key: _formKey,
         child: Column(
@@ -66,22 +68,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               textInputAction: TextInputAction.next,
               prefixIcon: Icons.email_outlined,
               validator: (value) {
-                if (value == null || value.trim().isEmpty) return 'Vui long nhap email';
+                if (value == null || value.trim().isEmpty) {
+                  return 'Vui lòng nhập email';
+                }
                 const pattern = r'^[^\s@]+@[^\s@]+\.[^\s@]+$';
-                if (!RegExp(pattern).hasMatch(value.trim())) return 'Email khong hop le';
+                if (!RegExp(pattern).hasMatch(value.trim())) {
+                  return 'Email không hợp lệ';
+                }
                 return null;
               },
             ),
             const SizedBox(height: 14),
             AuthTextField(
               controller: _passwordController,
-              label: 'Mat khau',
-              hint: 'Nhap mat khau',
+              label: 'Mật khẩu',
+              hint: 'Nhập mật khẩu của bạn',
               obscureText: true,
               prefixIcon: Icons.lock_outline,
               validator: (value) {
-                if (value == null || value.isEmpty) return 'Vui long nhap mat khau';
-                if (value.length < 6) return 'Mat khau phai co it nhat 6 ky tu';
+                if (value == null || value.isEmpty) {
+                  return 'Vui lòng nhập mật khẩu';
+                }
+                if (value.length < 6) return 'Mật khẩu phải có ít nhất 6 ký tự';
                 return null;
               },
             ),
@@ -90,25 +98,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 Checkbox(
                   value: _rememberMe,
-                  onChanged: (value) => setState(() => _rememberMe = value ?? false),
+                  onChanged: (value) =>
+                      setState(() => _rememberMe = value ?? false),
                 ),
-                const Text('Remember me', style: TextStyle(color: Color(0xFF5E6A80))),
+                const Text(
+                  'Remember me',
+                  style: TextStyle(color: Color(0xFF5E6A80)),
+                ),
                 const Spacer(),
                 TextButton(
                   onPressed: () => context.go(RoutePaths.forgotPassword),
-                  child: const Text('Quen mat khau?'),
+                  child: const Text('Quên mật khẩu?'),
                 ),
               ],
             ),
             AuthPrimaryButton(
-              label: 'Dang nhap',
+              label: 'Đăng nhập',
               isLoading: authState.isLoading,
               onPressed: _submit,
             ),
             const SizedBox(height: 12),
             AuthSwitchLink(
-              question: 'Chua co tai khoan?',
-              actionLabel: 'Dang ky',
+              question: 'Chưa có tài khoản?',
+              actionLabel: 'Đăng ký',
               onTap: () => context.go(RoutePaths.register),
             ),
           ],

@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 
-import '../../../models/home_course_model.dart';
+import '../../../models/home/home_course_model.dart';
 import 'home_section_title.dart';
 import 'suggested_course_card.dart';
 
@@ -17,11 +17,15 @@ class SuggestedCoursesSection extends StatelessWidget {
         const HomeSectionTitle(title: 'Khóa học đề xuất'),
         const SizedBox(height: 12),
         if (courses.isEmpty)
-          const Card(
-            child: Padding(
-              padding: EdgeInsets.all(14),
-              child: Text('Chua co khoa hoc de xuat.'),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.96),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFDDE8F7)),
             ),
+            child: const Text('Chưa có khóa học đề xuất.'),
           )
         else
           SizedBox(
@@ -39,5 +43,3 @@ class SuggestedCoursesSection extends StatelessWidget {
     );
   }
 }
-
-

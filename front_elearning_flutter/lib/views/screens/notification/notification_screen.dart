@@ -1,8 +1,11 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/providers.dart';
-import '../../../core/result/result.dart';
+import '../../../models/notification/notification_model.dart';
+import '../../widgets/common/catalunya_scaffold.dart';
+import '../../widgets/common/empty_state_view.dart';
+import '../../widgets/notification/notification_list_item.dart';
 
 class NotificationScreen extends ConsumerStatefulWidget {
   const NotificationScreen({super.key});
@@ -12,48 +15,27 @@ class NotificationScreen extends ConsumerStatefulWidget {
 }
 
 class _NotificationScreenState extends ConsumerState<NotificationScreen> {
-  late Future<List<Map<String, dynamic>>> _future;
-  List<Map<String, dynamic>> _items = const [];
-
   @override
   void initState() {
     super.initState();
-    _future = _load();
+    Future.microtask(
+      () => ref.read(notificationScreenViewModelProvider.notifier).initialize(),
+    );
   }
 
-  Future<List<Map<String, dynamic>>> _load() async {
-    final result = await ref.read(apiDataViewModelProvider).get('/api/user/notifications');
-    if (result case Failure(:final error)) throw Exception(error.message);
-    final value = (result as Success<dynamic>).value;
-    final data = value is Map<String, dynamic> ? (value['data'] ?? value['Data'] ?? const []) : const [];
-    final list = data is List ? data.whereType<Map<String, dynamic>>().toList() : <Map<String, dynamic>>[];
-    _items = list;
-    return list;
-  }
-
-  Future<void> _markAsRead(Map<String, dynamic> item) async {
-    final id = (item['id'] ?? item['Id'] ?? '').toString();
-    if (id.isEmpty) return;
-    await ref.read(apiDataViewModelProvider).put('/api/user/notifications/$id/mark-as-read');
-    if (!mounted) return;
-    setState(() {
-      _items = _items
-          .map((n) => (n['id'] ?? n['Id']).toString() == id ? {...n, 'isRead': true, 'IsRead': true} : n)
-          .toList();
-    });
+  Future<void> _markAsRead(NotificationItemModel item) async {
+    await ref
+        .read(notificationScreenViewModelProvider.notifier)
+        .markAsRead(item);
   }
 
   Future<void> _markAllRead() async {
-    await ref.read(apiDataViewModelProvider).put('/api/user/notifications/mark-all-read');
-    if (!mounted) return;
-    setState(() {
-      _items = _items.map((n) => {...n, 'isRead': true, 'IsRead': true}).toList();
-    });
+    await ref.read(notificationScreenViewModelProvider.notifier).markAllRead();
   }
 
-  String _formatTime(dynamic value) {
-    final raw = value?.toString();
-    if (raw == null || raw.isEmpty) return '';
+  String _formatTime(String value) {
+    final raw = value;
+    if (raw.isEmpty) return '';
     final dt = DateTime.tryParse(raw);
     if (dt == null) return '';
     final local = dt.toLocal();
@@ -78,88 +60,69 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _future,
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          if (snapshot.hasError) return Scaffold(body: Center(child: Text('${snapshot.error}')));
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
-        }
-        final items = _items;
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Thong bao'),
-            actions: [
-              TextButton(onPressed: _markAllRead, child: const Text('Doc het')),
-            ],
+    final state = ref.watch(notificationScreenViewModelProvider);
+    Widget buildStaticBody(Widget child) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: Center(child: child),
           ),
-          body: RefreshIndicator(
-            onRefresh: () async {
-              final list = await _load();
-              if (mounted) setState(() => _items = list);
-            },
-            child: ListView.builder(
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                final title = (item['title'] ?? item['Title'] ?? 'Notification').toString();
-                final body = (item['message'] ?? item['Message'] ?? '').toString();
-                final createdAt = item['createdAt'] ?? item['CreatedAt'];
-                final typeRaw = item['type'] ?? item['Type'] ?? 0;
-                final isRead = (item['isRead'] ?? item['IsRead'] ?? false) == true;
-                final type = typeRaw is int ? typeRaw : int.tryParse(typeRaw.toString()) ?? 0;
-                return InkWell(
-                  onTap: () => _markAsRead(item),
-                  child: Container(
-                    color: isRead ? null : const Color(0xFFF0F7FF),
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: const Color(0xFFEFF2FF),
-                          child: Icon(_iconOf(type), color: Theme.of(context).colorScheme.primary),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      title,
-                                      style: TextStyle(fontWeight: isRead ? FontWeight.w500 : FontWeight.w700),
-                                    ),
-                                  ),
-                                  if (!isRead)
-                                    Container(
-                                      width: 8,
-                                      height: 8,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).colorScheme.primary,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(body),
-                              const SizedBox(height: 4),
-                              Text(_formatTime(createdAt), style: Theme.of(context).textTheme.bodySmall),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+        ],
+      );
+    }
+
+    return CatalunyaScaffold(
+      appBar: AppBar(
+        title: const Text('Thông báo'),
+        actions: [
+          TextButton(
+            onPressed: state.isActing ? null : _markAllRead,
+            child: const Text('Đọc hết'),
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await ref
+              .read(notificationScreenViewModelProvider.notifier)
+              .refresh();
+        },
+        child: switch ((
+          state.isLoading,
+          state.errorMessage.isNotEmpty,
+          state.items.isEmpty,
+        )) {
+          (true, _, _) => buildStaticBody(const CircularProgressIndicator()),
+          (_, true, true) => buildStaticBody(
+            EmptyStateView(
+              message: state.errorMessage,
+              icon: Icons.error_outline_rounded,
             ),
           ),
-        );
-      },
+          (_, _, true) => buildStaticBody(
+            const EmptyStateView(
+              message: 'Không có thông báo nào',
+              icon: Icons.notifications_off_rounded,
+            ),
+          ),
+          _ => ListView.builder(
+            padding: const EdgeInsets.only(top: 6, bottom: 12),
+            itemCount: state.items.length,
+            itemBuilder: (context, index) {
+              final item = state.items[index];
+              return NotificationListItem(
+                item: item,
+                formatTime: _formatTime,
+                iconOf: _iconOf,
+                onTap: () => _markAsRead(item),
+              );
+            },
+          ),
+        },
+      ),
     );
   }
 }
+

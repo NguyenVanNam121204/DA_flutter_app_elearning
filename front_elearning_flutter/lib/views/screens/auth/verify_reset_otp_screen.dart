@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -40,7 +40,7 @@ class _VerifyResetOtpScreenState extends ConsumerState<VerifyResetOtpScreen> {
     final authState = ref.watch(authViewModelProvider);
     return AuthShell(
       title: 'Xac thuc OTP',
-      subtitle: 'Nhap ma OTP da gui den ${widget.email}.',
+      subtitle: 'Nhập mã OTP đã gửi đến ${widget.email}.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -59,3 +59,4 @@ class _VerifyResetOtpScreenState extends ConsumerState<VerifyResetOtpScreen> {
     );
   }
 }
+

@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/providers.dart';
 import '../../../app/router/route_paths.dart';
-import '../../../core/result/result.dart';
+import '../../widgets/common/catalunya_card.dart';
+import '../../widgets/common/catalunya_nav_tile.dart';
+import '../../widgets/common/catalunya_scaffold.dart';
+import '../../widgets/common/state_views.dart';
 
 class LessonDetailScreen extends ConsumerStatefulWidget {
   const LessonDetailScreen({required this.lessonId, super.key});
@@ -15,67 +18,65 @@ class LessonDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
-  Future<Map<String, dynamic>> _loadLesson() async {
-    final result = await ref.read(lessonFeatureViewModelProvider).lessonDetailBundle(widget.lessonId);
-    return switch (result) {
-      Success(:final value) => value,
-      Failure(:final error) => throw Exception(error.message),
-    };
-  }
-
-  int _contentType(Map<String, dynamic> m) {
-    final raw = m['contentType'] ?? m['ContentType'] ?? 1;
-    if (raw is int) return raw;
-    return int.tryParse(raw.toString()) ?? 1;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Lesson Detail')),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: _loadLesson(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            if (snapshot.hasError) return Center(child: Text('${snapshot.error}'));
-            return const Center(child: CircularProgressIndicator());
-          }
-          final data = snapshot.data!;
-          final lesson = data['lesson'] as Map<String, dynamic>;
-          final modules = data['modules'] as List<Map<String, dynamic>>;
-          final title = (lesson['title'] ?? lesson['Title'] ?? 'Lesson').toString();
-          final description = (lesson['description'] ?? lesson['Description'] ?? '').toString();
+    final asyncData = ref.watch(lessonDetailBundleProvider(widget.lessonId));
+    return CatalunyaScaffold(
+      appBar: AppBar(title: const Text('Chi tiết bài học')),
+      body: asyncData.when(
+        data: (data) {
+          final lesson = data.lesson;
+          final modules = data.modules;
+          final title = lesson.title;
+          final description = lesson.description;
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text(title, style: Theme.of(context).textTheme.headlineSmall),
+              CatalunyaCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    if (description.isNotEmpty) Text(description),
+                  ],
+                ),
+              ),
               const SizedBox(height: 8),
-              if (description.isNotEmpty) Text(description),
               const SizedBox(height: 16),
-              Text('Noi dung bai hoc', style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                'Nội dung bài học',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 8),
               ...modules.map((m) {
-                final moduleId = (m['moduleId'] ?? m['ModuleId'] ?? '').toString();
-                final name = (m['name'] ?? m['Name'] ?? 'Module').toString();
-                final type = _contentType(m);
-                return Card(
-                  child: ListTile(
-                    title: Text(name),
-                    subtitle: Text('Type: $type'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      if (type == 3) {
-                        context.push('${RoutePaths.assignmentDetail}?moduleId=$moduleId');
-                      } else {
-                        context.push('${RoutePaths.moduleLearning}?moduleId=$moduleId');
-                      }
-                    },
-                  ),
+                final moduleId = m.moduleId;
+                final name = m.name;
+                final type = m.contentType;
+                return CatalunyaNavTile(
+                  title: name,
+                  subtitle: 'Loại nội dung: $type',
+                  onTap: () {
+                    if (type == 3) {
+                      context.push(
+                        '${RoutePaths.assignmentDetail}?moduleId=$moduleId',
+                      );
+                    } else {
+                      context.push(
+                        '${RoutePaths.moduleLearning}?moduleId=$moduleId',
+                      );
+                    }
+                  },
                 );
               }),
             ],
           );
         },
+        loading: () => const LoadingStateView(),
+        error: (error, _) => ErrorStateView(message: '$error'),
       ),
     );
   }

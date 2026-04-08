@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -28,7 +28,9 @@ class _LoadingPageState extends ConsumerState<LoadingPage> {
 
   Future<void> _checkAndNavigate() async {
     setState(() => _checking = true);
-    final result = await ref.read(apiDataViewModelProvider).get('/api/user/courses/system-courses');
+    final result = await ref
+        .read(learningFeatureViewModelProvider)
+        .pingSystemCourses();
     if (!mounted) return;
     setState(() => _checking = false);
     if (result is Success<dynamic>) {
@@ -39,16 +41,24 @@ class _LoadingPageState extends ConsumerState<LoadingPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Loi ket noi server'),
-        content: const Text('Khong the ket noi den server. Thu lai hoac vao app tam de test UI.'),
+        content: const Text(
+          'Không thể kết nối đến server. Thử lại hoặc vào app tạm để test UI.',
+        ),
         actions: [
-          TextButton(onPressed: () {
-            Navigator.of(context).pop();
-            _checkAndNavigate();
-          }, child: const Text('Thu lai')),
-          FilledButton(onPressed: () {
-            Navigator.of(context).pop();
-            context.go(RoutePaths.mainApp);
-          }, child: const Text('Vao offline')),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _checkAndNavigate();
+            },
+            child: const Text('Thu lai'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              context.go(RoutePaths.mainApp);
+            },
+            child: const Text('Vao offline'),
+          ),
         ],
       ),
     );
@@ -63,10 +73,11 @@ class _LoadingPageState extends ConsumerState<LoadingPage> {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(height: 12),
-            Text(_checking ? 'Dang kiem tra ket noi...' : 'Dang khoi dong...'),
+            Text(_checking ? 'Đang kiểm tra kết nối...' : 'Đang khởi động...'),
           ],
         ),
       ),
     );
   }
 }
+

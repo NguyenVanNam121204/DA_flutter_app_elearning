@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router/route_paths.dart';
@@ -47,7 +47,7 @@ class _PaymentFailedScreenState extends State<PaymentFailedScreen> {
                 Text(widget.reason, textAlign: TextAlign.center),
               ],
               const SizedBox(height: 12),
-              Text('Dang chuyen ve trang chu trong $_countdown giay...'),
+              Text('Đang chuyển về trang chủ trong $_countdown giay...'),
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: () => context.go(RoutePaths.mainApp),
@@ -60,3 +60,4 @@ class _PaymentFailedScreenState extends State<PaymentFailedScreen> {
     );
   }
 }
+

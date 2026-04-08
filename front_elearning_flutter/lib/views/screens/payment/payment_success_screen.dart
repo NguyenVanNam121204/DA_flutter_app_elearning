@@ -1,19 +1,26 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/providers.dart';
 import '../../../app/router/route_paths.dart';
 import '../../../core/result/result.dart';
+import '../../../models/payment/payment_models.dart';
 
 class PaymentSuccessScreen extends ConsumerStatefulWidget {
-  const PaymentSuccessScreen({required this.paymentId, this.courseId = '', this.orderCode = '', super.key});
+  const PaymentSuccessScreen({
+    required this.paymentId,
+    this.courseId = '',
+    this.orderCode = '',
+    super.key,
+  });
   final String paymentId;
   final String courseId;
   final String orderCode;
 
   @override
-  ConsumerState<PaymentSuccessScreen> createState() => _PaymentSuccessScreenState();
+  ConsumerState<PaymentSuccessScreen> createState() =>
+      _PaymentSuccessScreenState();
 }
 
 class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen> {
@@ -33,11 +40,13 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen> {
     if (widget.paymentId.isEmpty) {
       setState(() {
         _loading = false;
-        _error = 'Khong tim thay thong tin thanh toan';
+        _error = 'Không tìm thấy thông tin thanh toán';
       });
       return;
     }
-    final confirm = await ref.read(paymentFeatureViewModelProvider).confirmPayment(widget.paymentId);
+    final confirm = await ref
+        .read(paymentFeatureViewModelProvider)
+        .confirmPayment(widget.paymentId);
     if (confirm case Failure(:final error)) {
       setState(() {
         _loading = false;
@@ -45,23 +54,34 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen> {
       });
       return;
     }
-    final detail = await ref.read(paymentFeatureViewModelProvider).paymentHistory();
+    final detail = await ref
+        .read(paymentFeatureViewModelProvider)
+        .paymentHistory();
     if (detail case Success(:final value)) {
       final found = value.firstWhere(
-            (e) => (e['paymentId'] ?? e['PaymentId'] ?? '').toString() == widget.paymentId,
-            orElse: () => <String, dynamic>{},
-          );
-        final productType = found['productType'] ?? found['ProductType'];
-        final productId = (found['productId'] ?? found['ProductId'] ?? '').toString();
-        if (productType == 2 || productType?.toString() == '2') {
-          _isPackage = true;
-        }
-        if ((productType == 1 || productType?.toString() == '1') && productId.isNotEmpty) {
-          _resolvedCourseId = productId;
-          final enroll =
-              await ref.read(apiDataViewModelProvider).post('/api/user/enrollments', body: {'CourseId': productId});
-          _enrolled = enroll is Success<dynamic>;
-        }
+        (e) => e.paymentId == widget.paymentId,
+        orElse: () => const PaymentHistoryItemModel(
+          paymentId: '',
+          productId: '',
+          orderCode: '',
+          amount: '',
+          status: '',
+          productType: '',
+          createdAt: '',
+        ),
+      );
+      final productType = found.productType;
+      final productId = found.productId;
+      if (productType == '2') {
+        _isPackage = true;
+      }
+      if (productType == '1' && productId.isNotEmpty) {
+        _resolvedCourseId = productId;
+        final enroll = await ref
+            .read(paymentFeatureViewModelProvider)
+            .enrollCourse(productId);
+        _enrolled = enroll is Success<dynamic>;
+      }
     }
     if (mounted) setState(() => _loading = false);
   }
@@ -84,7 +104,10 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen> {
                 const SizedBox(height: 12),
                 Text(_error, textAlign: TextAlign.center),
                 const SizedBox(height: 12),
-                FilledButton(onPressed: () => context.go(RoutePaths.mainApp), child: const Text('Ve trang chu')),
+                FilledButton(
+                  onPressed: () => context.go(RoutePaths.mainApp),
+                  child: const Text('Ve trang chu'),
+                ),
               ],
             ),
           ),
@@ -101,14 +124,17 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen> {
             const SizedBox(height: 12),
             Text('PaymentId: ${widget.paymentId}'),
             const SizedBox(height: 8),
-            const Text('Thanh toan thanh cong'),
-            if (widget.orderCode.isNotEmpty) Text('Ma giao dich: ${widget.orderCode}'),
-            if (_isPackage) const Text('Goi giao vien da duoc kich hoat'),
-            if (_enrolled) const Text('Ban da duoc dang ky vao khoa hoc!'),
+            const Text('Thanh toán thành công'),
+            if (widget.orderCode.isNotEmpty)
+              Text('Mã giao dịch: ${widget.orderCode}'),
+            if (_isPackage) const Text('Gói giáo viên đã được kích hoạt'),
+            if (_enrolled) const Text('Bạn đã được đăng ký vào khóa học!'),
             const SizedBox(height: 12),
             FilledButton(
               onPressed: () {
-                final cid = widget.courseId.isNotEmpty ? widget.courseId : _resolvedCourseId;
+                final cid = widget.courseId.isNotEmpty
+                    ? widget.courseId
+                    : _resolvedCourseId;
                 if (cid.isNotEmpty) {
                   context.go('${RoutePaths.courseDetail}?courseId=$cid');
                 } else if (_isPackage) {
@@ -117,7 +143,11 @@ class _PaymentSuccessScreenState extends ConsumerState<PaymentSuccessScreen> {
                   context.go(RoutePaths.mainApp);
                 }
               },
-              child: Text(_enrolled ? 'Xem khoa hoc' : (_isPackage ? 'Den trang ca nhan' : 'Ve trang chu')),
+              child: Text(
+                _enrolled
+                    ? 'Xem khóa học'
+                    : (_isPackage ? 'Đến trang cá nhân' : 'Về trang chủ'),
+              ),
             ),
           ],
         ),

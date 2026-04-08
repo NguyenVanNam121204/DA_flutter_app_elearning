@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/providers.dart';
 import '../../../app/router/route_paths.dart';
+import '../../widgets/common/catalunya_scaffold.dart';
 import '../../widgets/home/home_header_card.dart';
 import '../../widgets/home/my_courses_section.dart';
 import '../../widgets/home/streak_section.dart';
@@ -30,12 +31,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final user = ref.watch(authViewModelProvider).user;
     final homeState = ref.watch(homeViewModelProvider);
 
-    return Scaffold(
+    return CatalunyaScaffold(
       appBar: AppBar(
         title: const Text('Catalunya English'),
         actions: [
           IconButton(
-            tooltip: 'Dang xuat',
+            tooltip: 'Đăng xuất',
             onPressed: () async {
               await ref.read(authViewModelProvider.notifier).logout();
               if (context.mounted) context.go(RoutePaths.login);
@@ -45,9 +46,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => ref.read(homeViewModelProvider.notifier).loadHomeData(),
+        onRefresh: () =>
+            ref.read(homeViewModelProvider.notifier).loadHomeData(),
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           children: [
             HomeHeaderCard(displayName: user?.fullName ?? 'ban'),
             const SizedBox(height: 14),
@@ -68,3 +70,4 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 }
+

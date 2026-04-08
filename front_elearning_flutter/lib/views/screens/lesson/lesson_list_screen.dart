@@ -1,10 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/providers.dart';
 import '../../../app/router/route_paths.dart';
-import '../../../core/result/result.dart';
+import '../../widgets/common/catalunya_card.dart';
+import '../../widgets/common/catalunya_scaffold.dart';
+import '../../widgets/common/empty_state_view.dart';
+import '../../widgets/common/state_views.dart';
 
 class LessonListScreen extends ConsumerStatefulWidget {
   const LessonListScreen({required this.courseId, super.key});
@@ -15,44 +18,46 @@ class LessonListScreen extends ConsumerStatefulWidget {
 }
 
 class _LessonListScreenState extends ConsumerState<LessonListScreen> {
-  Future<List<Map<String, dynamic>>> _load() async {
-    final result = await ref
-        .read(lessonFeatureViewModelProvider)
-        .lessonsByCourse(widget.courseId);
-    return switch (result) {
-      Success(:final value) => value,
-      Failure(:final error) => throw Exception(error.message),
-    };
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Lesson List')),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _load(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            if (snapshot.hasError) return Center(child: Text('${snapshot.error}'));
-            return const Center(child: CircularProgressIndicator());
+    final asyncLessons = ref.watch(lessonsByCourseProvider(widget.courseId));
+    return CatalunyaScaffold(
+      appBar: AppBar(title: const Text('Danh sách bài học')),
+      body: asyncLessons.when(
+        data: (lessons) {
+          if (lessons.isEmpty) {
+            return const Center(
+              child: EmptyStateView(
+                message: 'Không có bài học',
+                icon: Icons.library_books_outlined,
+              ),
+            );
           }
-          final lessons = snapshot.data!;
-          if (lessons.isEmpty) return const Center(child: Text('Khong co bai hoc'));
           return ListView.builder(
+            padding: const EdgeInsets.all(16),
             itemCount: lessons.length,
             itemBuilder: (context, index) {
               final item = lessons[index];
-              final id = (item['lessonId'] ?? item['LessonId'] ?? '').toString();
-              final title = (item['title'] ?? item['Title'] ?? 'Lesson').toString();
-              return ListTile(
-                title: Text(title),
-                subtitle: Text('ID: $id'),
-                onTap: () => context.push('${RoutePaths.lessonDetail}?lessonId=$id'),
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: CatalunyaCard(
+                  child: ListTile(
+                    title: Text(item.title),
+                    subtitle: Text('ID: ${item.lessonId}'),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => context.push(
+                      '${RoutePaths.lessonDetail}?lessonId=${item.lessonId}',
+                    ),
+                  ),
+                ),
               );
             },
           );
         },
+        loading: () => const LoadingStateView(),
+        error: (error, _) => ErrorStateView(message: '$error'),
       ),
     );
   }
 }
+

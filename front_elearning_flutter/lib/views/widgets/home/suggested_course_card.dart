@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 
-import '../../../models/home_course_model.dart';
+import '../../../models/home/home_course_model.dart';
 
 class SuggestedCourseCard extends StatelessWidget {
   const SuggestedCourseCard({super.key, required this.course});
@@ -92,5 +92,6 @@ class SuggestedCourseCard extends StatelessWidget {
     );
   }
 }
+
 
 

@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/providers.dart';
 import '../../../app/router/route_paths.dart';
-import '../../../core/result/result.dart';
+import '../../widgets/common/catalunya_scaffold.dart';
+import '../../widgets/common/empty_state_view.dart';
+import '../../widgets/common/state_views.dart';
+import '../../widgets/teacher/teacher_info_list_tile.dart';
 
 class TeacherQuizAttemptsScreen extends ConsumerWidget {
   const TeacherQuizAttemptsScreen({required this.quizId, super.key});
@@ -12,41 +15,35 @@ class TeacherQuizAttemptsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return FutureBuilder<Result<List<Map<String, dynamic>>>>(
-      future: ref.read(teacherFeatureViewModelProvider).quizAttempts(quizId),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
-        }
-        final result = snapshot.data!;
-        if (result case Failure(:final error)) {
-          return Scaffold(body: Center(child: Text(error.message)));
-        }
-        final items = (result as Success<List<Map<String, dynamic>>>).value;
-        return Scaffold(
-          appBar: AppBar(title: const Text('Quiz Attempts')),
-          body: items.isEmpty
-              ? const Center(child: Text('Chua co luot lam bai'))
-              : ListView.builder(
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final a = items[index];
-                    final id = (a['attemptId'] ?? a['AttemptId'] ?? '').toString();
-                    final user = (a['studentName'] ?? a['StudentName'] ?? 'Hoc vien').toString();
-                    final score = (a['totalScore'] ?? a['TotalScore'] ?? '-').toString();
-                    final percent = (a['percentage'] ?? a['Percentage'] ?? '-').toString();
-                    return Card(
-                      child: ListTile(
-                        title: Text(user),
-                        subtitle: Text('Score: $score • $percent%'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context.push('${RoutePaths.teacherQuizAttemptDetail}?attemptId=$id'),
-                      ),
-                    );
-                  },
+    final asyncItems = ref.watch(teacherQuizAttemptsDataProvider(quizId));
+    return asyncItems.when(
+      data: (items) => CatalunyaScaffold(
+        appBar: AppBar(title: const Text('Lượt làm bài quiz')),
+        body: items.isEmpty
+            ? const Center(
+                child: EmptyStateView(
+                  message: 'Chưa có lượt làm bài',
+                  icon: Icons.fact_check_outlined,
                 ),
-        );
-      },
+              )
+            : ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final a = items[index];
+                  return TeacherInfoListTile(
+                    title: a.studentName,
+                    subtitle: 'Điểm: ${a.totalScore} • ${a.percentage}%',
+                    onTap: () => context.push(
+                      '${RoutePaths.teacherQuizAttemptDetail}?attemptId=${a.attemptId}',
+                    ),
+                  );
+                },
+              ),
+      ),
+      loading: () => const CatalunyaScaffold(body: LoadingStateView()),
+      error: (error, _) =>
+          CatalunyaScaffold(body: ErrorStateView(message: '$error')),
     );
   }
 }

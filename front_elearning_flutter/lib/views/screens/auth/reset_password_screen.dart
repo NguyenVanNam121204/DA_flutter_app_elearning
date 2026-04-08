@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,12 +10,17 @@ import '../../widgets/auth/auth_shell.dart';
 import '../../widgets/auth/auth_text_field.dart';
 
 class ResetPasswordScreen extends ConsumerStatefulWidget {
-  const ResetPasswordScreen({super.key, required this.email, required this.otpCode});
+  const ResetPasswordScreen({
+    super.key,
+    required this.email,
+    required this.otpCode,
+  });
   final String email;
   final String otpCode;
 
   @override
-  ConsumerState<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  ConsumerState<ResetPasswordScreen> createState() =>
+      _ResetPasswordScreenState();
 }
 
 class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
@@ -32,7 +37,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final ok = await ref.read(authViewModelProvider.notifier).setNewPassword(
+    final ok = await ref
+        .read(authViewModelProvider.notifier)
+        .setNewPassword(
           email: widget.email,
           otpCode: widget.otpCode,
           newPassword: _passwordController.text.trim(),
@@ -46,8 +53,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authViewModelProvider);
     return AuthShell(
-      title: 'Dat lai mat khau',
-      subtitle: 'Tao mat khau moi cho tai khoan ${widget.email}',
+      title: 'Đặt lại mật khẩu',
+      subtitle: 'Tạo mật khẩu mới cho tài khoản ${widget.email}',
       child: Form(
         key: _formKey,
         child: Column(
@@ -59,32 +66,34 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             ],
             AuthTextField(
               controller: _passwordController,
-              label: 'Mat khau moi',
-              hint: 'Nhap mat khau moi',
+              label: 'Mật khẩu mới',
+              hint: 'Nhập mật khẩu mới',
               obscureText: true,
               validator: (value) {
                 final v = (value ?? '').trim();
-                if (v.isEmpty) return 'Vui long nhap mat khau';
-                if (v.length < 8) return 'Mat khau toi thieu 8 ky tu';
+                if (v.isEmpty) return 'Vui lòng nhập mật khẩu';
+                if (v.length < 8) return 'Mật khẩu tối thiểu 8 ký tự';
                 return null;
               },
             ),
             const SizedBox(height: 14),
             AuthTextField(
               controller: _confirmController,
-              label: 'Xac nhan mat khau',
-              hint: 'Nhap lai mat khau',
+              label: 'Xác nhận mật khẩu',
+              hint: 'Nhập lại mật khẩu',
               obscureText: true,
               validator: (value) {
                 final v = (value ?? '').trim();
-                if (v.isEmpty) return 'Vui long nhap lai mat khau';
-                if (v != _passwordController.text.trim()) return 'Mat khau xac nhan khong khop';
+                if (v.isEmpty) return 'Vui lòng nhập lại mật khẩu';
+                if (v != _passwordController.text.trim()) {
+                  return 'Mật khẩu xác nhận không khớp';
+                }
                 return null;
               },
             ),
             const SizedBox(height: 20),
             AuthPrimaryButton(
-              label: 'Dat lai mat khau',
+              label: 'Đặt lại mật khẩu',
               isLoading: authState.isLoading,
               onPressed: _submit,
             ),

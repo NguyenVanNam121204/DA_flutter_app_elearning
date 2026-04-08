@@ -1,6 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 
-import '../../../models/streak_model.dart';
+import '../../../models/streak/streak_model.dart';
 
 class StreakSection extends StatelessWidget {
   const StreakSection({super.key, required this.streak, this.errorMessage});
@@ -44,3 +44,4 @@ class StreakSection extends StatelessWidget {
     );
   }
 }
+

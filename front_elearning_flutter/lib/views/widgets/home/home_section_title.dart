@@ -12,9 +12,10 @@ class HomeSectionTitle extends StatelessWidget {
       children: [
         Text(
           title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF17213A),
+          ),
         ),
         const Spacer(),
         // ignore: use_null_aware_elements
@@ -23,5 +24,3 @@ class HomeSectionTitle extends StatelessWidget {
     );
   }
 }
-
-

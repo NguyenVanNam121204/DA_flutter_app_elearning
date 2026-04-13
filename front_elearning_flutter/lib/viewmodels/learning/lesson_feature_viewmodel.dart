@@ -47,6 +47,12 @@ class LessonFeatureViewModel {
     return _lectureRepository.moduleLectures(moduleId);
   }
 
+  Future<Result<List<LectureTreeItemModel>>> moduleLectureTree(
+    String moduleId,
+  ) async {
+    return _lectureRepository.moduleLectureTree(moduleId);
+  }
+
   Future<Result<LectureDetailModel>> lectureDetail(String lectureId) async {
     return _lectureRepository.lectureDetail(lectureId);
   }
@@ -57,13 +63,31 @@ class LessonFeatureViewModel {
     return _pronunciationRepository.pronunciationList(moduleId);
   }
 
-  Future<Result<PronunciationDetailModel>> pronunciationDetail(
-    String pronunciationId,
+  Future<Result<ModulePronunciationSummaryModel>> pronunciationSummary(
+    String moduleId,
   ) async {
-    return _pronunciationRepository.pronunciationDetail(pronunciationId);
+    return _pronunciationRepository.moduleSummary(moduleId);
+  }
+
+  Future<Result<PronunciationAssessmentResultModel>> assessPronunciation({
+    required int flashCardId,
+    required String filePath,
+    required String fileName,
+    double? durationInSeconds,
+  }) async {
+    return _pronunciationRepository.assessPronunciation(
+      flashCardId: flashCardId,
+      filePath: filePath,
+      fileName: fileName,
+      durationInSeconds: durationInSeconds,
+    );
   }
 
   Future<Result<LessonResultModel>> lessonResult(String attemptId) async {
     return _lessonRepository.lessonResult(attemptId);
+  }
+
+  Future<Result<void>> startModule(String moduleId) async {
+    return _lessonRepository.startModule(moduleId);
   }
 }

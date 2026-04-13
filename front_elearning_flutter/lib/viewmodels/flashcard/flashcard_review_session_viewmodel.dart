@@ -63,9 +63,10 @@ class FlashcardReviewSessionViewModel
     final result = await _feature.dueReviewCards();
     switch (result) {
       case Success(:final value):
+        final enriched = await Future.wait(value.map(_enrichCardForReview));
         state = state.copyWith(
           isLoading: false,
-          cards: value,
+          cards: enriched,
           index: 0,
           isFinished: false,
           mastered: 0,
@@ -76,6 +77,50 @@ class FlashcardReviewSessionViewModel
     }
   }
 
+  bool _needsDetail(FlashcardModel card) {
+    return card.imageUrl.trim().isEmpty ||
+        card.exampleSentence.trim().isEmpty ||
+        card.exampleTranslation.trim().isEmpty ||
+        card.pronunciation.trim().isEmpty ||
+        card.partOfSpeech.trim().isEmpty;
+  }
+
+  Future<FlashcardModel> _enrichCardForReview(FlashcardModel card) async {
+    final cardId = card.flashCardId.trim();
+    if (cardId.isEmpty || !_needsDetail(card)) {
+      return card;
+    }
+
+    final detailResult = await _feature.flashcardById(cardId);
+    return switch (detailResult) {
+      Success(:final value) => card.copyWith(
+        term: card.term.trim().isNotEmpty ? card.term : value.term,
+        definition: card.definition.trim().isNotEmpty
+            ? card.definition
+            : value.definition,
+        pronunciation: card.pronunciation.trim().isNotEmpty
+            ? card.pronunciation
+            : value.pronunciation,
+        partOfSpeech: card.partOfSpeech.trim().isNotEmpty
+            ? card.partOfSpeech
+            : value.partOfSpeech,
+        exampleSentence: card.exampleSentence.trim().isNotEmpty
+            ? card.exampleSentence
+            : value.exampleSentence,
+        exampleTranslation: card.exampleTranslation.trim().isNotEmpty
+            ? card.exampleTranslation
+            : value.exampleTranslation,
+        audioUrl: card.audioUrl.trim().isNotEmpty
+            ? card.audioUrl
+            : value.audioUrl,
+        imageUrl: card.imageUrl.trim().isNotEmpty
+            ? card.imageUrl
+            : value.imageUrl,
+      ),
+      Failure() => card,
+    };
+  }
+
   void toggleCard() {
     state = state.copyWith(showBack: !state.showBack);
   }
@@ -83,10 +128,18 @@ class FlashcardReviewSessionViewModel
   Future<void> review(int quality) async {
     if (state.isSubmitting || state.index >= state.cards.length) return;
     final card = state.cards[state.index];
-    final cardId = card.flashCardId;
-    if (cardId.isEmpty) return;
+    final cardId = card.flashCardId.trim();
+    if (cardId.isEmpty || cardId.toLowerCase() == 'null') return;
     state = state.copyWith(isSubmitting: true);
-    await _feature.reviewCard(flashCardId: cardId, quality: quality);
+    final result = await _feature.reviewCard(
+      flashCardId: cardId,
+      quality: quality,
+    );
+    if (result is Failure<void>) {
+      state = state.copyWith(isSubmitting: false);
+      return;
+    }
+
     final mastered = quality >= 4 ? state.mastered + 1 : state.mastered;
     if (state.index < state.cards.length - 1) {
       state = state.copyWith(

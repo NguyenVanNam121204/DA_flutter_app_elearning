@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/providers.dart';
 import '../../../app/router/route_paths.dart';
-import '../../widgets/common/catalunya_card.dart';
 import '../../widgets/common/catalunya_scaffold.dart';
 import '../../widgets/common/empty_state_view.dart';
 import '../../widgets/common/state_views.dart';
+import '../../widgets/lesson/lesson_list_item_card.dart';
 
 class LessonListScreen extends ConsumerStatefulWidget {
   const LessonListScreen({required this.courseId, super.key});
@@ -38,17 +38,11 @@ class _LessonListScreenState extends ConsumerState<LessonListScreen> {
             itemCount: lessons.length,
             itemBuilder: (context, index) {
               final item = lessons[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: CatalunyaCard(
-                  child: ListTile(
-                    title: Text(item.title),
-                    subtitle: Text('ID: ${item.lessonId}'),
-                    trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: () => context.push(
-                      '${RoutePaths.lessonDetail}?lessonId=${item.lessonId}',
-                    ),
-                  ),
+              return LessonListItemCard(
+                item: item,
+                displayOrder: index + 1,
+                onTap: () => context.push(
+                  '${RoutePaths.lessonDetail}?lessonId=${item.lessonId}',
                 ),
               );
             },
@@ -60,4 +54,3 @@ class _LessonListScreenState extends ConsumerState<LessonListScreen> {
     );
   }
 }
-

@@ -4,10 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/providers.dart';
 import '../../../app/router/route_paths.dart';
+import '../../../core/result/result.dart';
 import '../../widgets/common/catalunya_card.dart';
-import '../../widgets/common/catalunya_nav_tile.dart';
 import '../../widgets/common/catalunya_scaffold.dart';
 import '../../widgets/common/state_views.dart';
+import '../../widgets/lesson/lesson_module_card.dart';
 
 class LessonDetailScreen extends ConsumerStatefulWidget {
   const LessonDetailScreen({required this.lessonId, super.key});
@@ -18,6 +19,48 @@ class LessonDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
+  Future<void> _handleModuleTap({
+    required String moduleId,
+    required int contentType,
+    required String contentTypeName,
+  }) async {
+    final startResult = await ref
+        .read(lessonFeatureViewModelProvider)
+        .startModule(moduleId);
+
+    if (startResult case Failure<void>(:final error)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    }
+
+    if (!mounted) return;
+
+    final normalizedTypeName = contentTypeName.toLowerCase();
+    final isFlashcard =
+        contentType == 2 || normalizedTypeName.contains('flash');
+    final isAssessment =
+        contentType == 3 ||
+        normalizedTypeName.contains('assessment') ||
+        normalizedTypeName.contains('assignment') ||
+        normalizedTypeName.contains('quiz');
+
+    if (isFlashcard) {
+      context.push(
+        '${RoutePaths.flashcardLearning}?moduleId=$moduleId&lessonId=${widget.lessonId}',
+      );
+      return;
+    }
+
+    if (isAssessment) {
+      context.push('${RoutePaths.assignmentDetail}?moduleId=$moduleId');
+      return;
+    }
+
+    context.push('${RoutePaths.moduleLearning}?moduleId=$moduleId');
+  }
+
   @override
   Widget build(BuildContext context) {
     final asyncData = ref.watch(lessonDetailBundleProvider(widget.lessonId));
@@ -45,7 +88,6 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
               const SizedBox(height: 16),
               Text(
                 'Nội dung bài học',
@@ -54,21 +96,23 @@ class _LessonDetailScreenState extends ConsumerState<LessonDetailScreen> {
               const SizedBox(height: 8),
               ...modules.map((m) {
                 final moduleId = m.moduleId;
-                final name = m.name;
                 final type = m.contentType;
-                return CatalunyaNavTile(
-                  title: name,
-                  subtitle: 'Loại nội dung: $type',
+                final normalizedTypeName = (m.contentTypeName ?? '')
+                    .toLowerCase();
+
+                return LessonModuleCard(
+                  module: m,
                   onTap: () {
-                    if (type == 3) {
-                      context.push(
-                        '${RoutePaths.assignmentDetail}?moduleId=$moduleId',
-                      );
-                    } else {
-                      context.push(
-                        '${RoutePaths.moduleLearning}?moduleId=$moduleId',
-                      );
-                    }
+                    _handleModuleTap(
+                      moduleId: moduleId,
+                      contentType: type,
+                      contentTypeName: normalizedTypeName,
+                    );
+                  },
+                  onPronunciationTap: () {
+                    context.push(
+                      '${RoutePaths.pronunciation}?moduleId=$moduleId',
+                    );
                   },
                 );
               }),

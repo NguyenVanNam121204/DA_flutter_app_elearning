@@ -8,13 +8,14 @@ class HomeSectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
         Text(
           title,
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
-            color: const Color(0xFF17213A),
+            color: isDark ? const Color(0xFFE2E8F0) : const Color(0xFF17213A),
           ),
         ),
         const Spacer(),

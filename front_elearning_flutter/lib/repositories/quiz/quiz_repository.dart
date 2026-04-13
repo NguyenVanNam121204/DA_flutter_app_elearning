@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/errors/app_error.dart';
 import '../../core/result/result.dart';
+import '../../models/learning/lesson_models.dart';
 import '../../models/quiz/quiz_models.dart';
 import '../../services/api_service.dart';
 
@@ -27,46 +28,88 @@ class QuizRepository {
       return const Failure(AppError(message: 'Quiz ID is required.'));
     }
 
+    final numericQuizId = int.tryParse(quizId!);
+    if (numericQuizId == null) {
+      return const Failure(
+        AppError(message: 'Invalid quiz ID. Unable to start quiz attempt.'),
+      );
+    }
+
     try {
       final response = await _apiService.post(
-        ApiConstants.quizStartAttemptByQuizId(quizId!),
+        ApiConstants.quizStartAttemptByQuizId(numericQuizId.toString()),
       );
       return Success(QuizAttemptStartModel.fromJson(_asMap(response.data)));
-    } on DioException catch (_) {
-      try {
-        final fallbackResponse = await _apiService.post(
-          ApiConstants.quizStartAttempt,
-          data: {'quizId': quizId},
-        );
-        return Success(
-          QuizAttemptStartModel.fromJson(_asMap(fallbackResponse.data)),
-        );
-      } on DioException catch (error) {
-        return Failure(_mapDioException(error));
-      } catch (_) {
-        return const Failure(
-          AppError(message: 'Unable to start quiz attempt.'),
-        );
-      }
+    } on DioException catch (error) {
+      return Failure(_mapDioException(error));
     } catch (_) {
       return const Failure(AppError(message: 'Unable to start quiz attempt.'));
     }
   }
 
-  Future<Result<void>> submitAttempt({
+  Future<Result<QuizAttemptStartModel>> resumeAttempt(String attemptId) async {
+    try {
+      final response = await _apiService.get(
+        ApiConstants.quizResumeAttempt(attemptId),
+      );
+      return Success(QuizAttemptStartModel.fromJson(_asMap(response.data)));
+    } on DioException catch (error) {
+      return Failure(_mapDioException(error));
+    } catch (_) {
+      return const Failure(AppError(message: 'Unable to resume quiz attempt.'));
+    }
+  }
+
+  Future<Result<QuizActiveAttemptModel>> checkActiveAttempt(
+    String quizId,
+  ) async {
+    try {
+      final response = await _apiService.get(
+        ApiConstants.quizCheckActiveAttempt(quizId),
+      );
+      return Success(QuizActiveAttemptModel.fromJson(_asMap(response.data)));
+    } on DioException catch (error) {
+      return Failure(_mapDioException(error));
+    } catch (_) {
+      return const Failure(
+        AppError(message: 'Unable to check active attempt.'),
+      );
+    }
+  }
+
+  Future<Result<LessonResultModel>> submitAttempt({
     required String attemptId,
-    required List<Map<String, Object?>> answers,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        ApiConstants.quizSubmitAttempt(attemptId),
+      );
+      return Success(LessonResultModel.fromJson(_asMap(response.data)));
+    } on DioException catch (error) {
+      return Failure(_mapDioException(error));
+    } catch (_) {
+      return const Failure(AppError(message: 'Unable to submit quiz attempt.'));
+    }
+  }
+
+  Future<Result<void>> updateAnswer({
+    required String attemptId,
+    required String questionId,
+    required Object userAnswer,
   }) async {
     try {
       await _apiService.post(
-        ApiConstants.quizSubmitAttempt(attemptId),
-        data: {'answers': answers},
+        ApiConstants.quizUpdateAnswer(attemptId),
+        data: {
+          'questionId': int.tryParse(questionId) ?? questionId,
+          'userAnswer': userAnswer,
+        },
       );
       return const Success(null);
     } on DioException catch (error) {
       return Failure(_mapDioException(error));
     } catch (_) {
-      return const Failure(AppError(message: 'Unable to submit quiz attempt.'));
+      return const Failure(AppError(message: 'Unable to update answer.'));
     }
   }
 

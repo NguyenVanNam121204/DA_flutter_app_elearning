@@ -15,13 +15,49 @@ class AssignmentRepository {
     required String assessmentId,
     required String moduleId,
   }) async {
-    final path = assessmentId.isNotEmpty
-        ? ApiConstants.userAssessmentDetail(assessmentId)
-        : ApiConstants.userAssessmentsByModule(moduleId);
-
     try {
-      final response = await _apiService.get(path);
-      return Success(AssignmentDetailModel.fromJson(_asMap(response.data)));
+      if (assessmentId.isEmpty) {
+        final response = await _apiService.get(
+          ApiConstants.userAssessmentsByModule(moduleId),
+        );
+        final list = _asList(response.data)
+            .map(AssignmentAssessmentItemModel.fromJson)
+            .where((item) => item.assessmentId.isNotEmpty)
+            .where((item) => item.isPublished)
+            .toList();
+
+        return Success(
+          AssignmentDetailModel(
+            assessments: list,
+            quizzes: const [],
+            essays: const [],
+          ),
+        );
+      }
+
+      final quizzesResponse = await _apiService.get(
+        ApiConstants.quizzesByAssessment(assessmentId),
+      );
+      final essaysResponse = await _apiService.get(
+        ApiConstants.userEssaysByAssessment(assessmentId),
+      );
+
+      final quizzes = _asList(quizzesResponse.data)
+          .map(AssignmentQuizItemModel.fromJson)
+          .where((item) => item.quizId.isNotEmpty)
+          .toList();
+      final essays = _asList(essaysResponse.data)
+          .map(AssignmentEssayItemModel.fromJson)
+          .where((item) => item.essayId.isNotEmpty)
+          .toList();
+
+      return Success(
+        AssignmentDetailModel(
+          assessments: const [],
+          quizzes: quizzes,
+          essays: essays,
+        ),
+      );
     } on DioException catch (error) {
       return Failure(_mapDioException(error));
     } catch (_) {
@@ -50,8 +86,11 @@ class AssignmentRepository {
   }) async {
     try {
       await _apiService.post(
-        ApiConstants.userEssaySubmissions,
-        data: {'essayId': essayId, 'content': content},
+        ApiConstants.userEssaySubmissionsSubmit,
+        data: {
+          'EssayId': int.tryParse(essayId) ?? essayId,
+          'TextContent': content,
+        },
       );
       return const Success(null);
     } on DioException catch (error) {
@@ -68,6 +107,21 @@ class AssignmentRepository {
       return raw;
     }
     return const {};
+  }
+
+  List<Map<String, dynamic>> _asList(Object? raw) {
+    if (raw is Map<String, dynamic>) {
+      final data = raw['data'] ?? raw['Data'] ?? raw['items'] ?? raw['Items'];
+      if (data is List) {
+        return data.whereType<Map<String, dynamic>>().toList();
+      }
+    }
+
+    if (raw is List) {
+      return raw.whereType<Map<String, dynamic>>().toList();
+    }
+
+    return const [];
   }
 
   AppError _mapDioException(DioException error) {

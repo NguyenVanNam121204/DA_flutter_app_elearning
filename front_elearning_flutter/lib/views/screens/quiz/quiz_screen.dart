@@ -10,14 +10,36 @@ import '../../widgets/quiz/quiz_question_card.dart';
 import '../../widgets/quiz/quiz_step_controls.dart';
 
 class QuizScreen extends ConsumerStatefulWidget {
-  const QuizScreen({required this.quizId, super.key});
+  const QuizScreen({
+    required this.quizId,
+    this.attemptId,
+    this.forceNewAttempt = false,
+    super.key,
+  });
   final String quizId;
+  final String? attemptId;
+  final bool forceNewAttempt;
 
   @override
   ConsumerState<QuizScreen> createState() => _QuizScreenState();
 }
 
 class _QuizScreenState extends ConsumerState<QuizScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(quizScreenViewModelProvider(widget.quizId).notifier)
+          .initialize(
+            widget.quizId,
+            resumeAttemptId: widget.attemptId,
+            forceStartNew: widget.forceNewAttempt,
+          );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(quizScreenViewModelProvider(widget.quizId));
@@ -27,7 +49,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
 
     ref.listen(quizScreenViewModelProvider(widget.quizId), (prev, next) {
       if ((prev?.errorMessage != next.errorMessage) &&
-          (next.errorMessage?.isNotEmpty ?? false)) {
+          (next.errorMessage?.isNotEmpty ?? false) &&
+          next.questions.isNotEmpty) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
@@ -37,6 +60,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
           (next.submittedAttemptId?.isNotEmpty ?? false)) {
         context.push(
           '${RoutePaths.lessonResult}?attemptId=${next.submittedAttemptId}',
+          extra: next.submittedResult,
         );
         notifier.clearSubmittedAttempt();
       }
@@ -49,8 +73,62 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
           if (state.isLoading) {
             return const LoadingStateView();
           }
-          if (state.questions.isEmpty) {
-            return const Center(child: Text('Bài kiểm tra chưa có câu hỏi'));
+          if (state.questions.isEmpty && !state.hasAttempt) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    state.quiz.title,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    state.isStarting
+                        ? 'Đang tải đề thi...'
+                        : 'Không tải được đề thi, vui lòng thử lại.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: state.isStarting ? null : notifier.startAttempt,
+                    child: Text(
+                      state.isStarting ? 'Đang bắt đầu...' : 'Thử lại',
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+          if (state.questions.isEmpty && state.hasAttempt) {
+            final message = (state.errorMessage ?? '').trim().isNotEmpty
+                ? state.errorMessage!
+                : 'Không tải được câu hỏi. Vui lòng thử lại.';
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: const Color(0xFFDC2626),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  FilledButton(
+                    onPressed: state.isStarting
+                        ? null
+                        : () => notifier.startAttempt(forceStartNew: true),
+                    child: Text(state.isStarting ? 'Đang xử lý...' : 'Thử lại'),
+                  ),
+                ],
+              ),
+            );
           }
           final clampedIndex = state.currentIndex.clamp(
             0,
@@ -95,6 +173,10 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
                     notifier.toggleMultiAnswer(qid, optionId, checked),
                 onSelectSingle: (optionId) =>
                     notifier.setSingleAnswer(qid, optionId),
+                onSetMatching: (pairs) =>
+                    notifier.setMatchingAnswer(qid, pairs),
+                onSetOrdering: (orderedIds) =>
+                    notifier.setOrderingAnswer(qid, orderedIds),
               ),
               QuizStepControls(
                 canGoBack: clampedIndex > 0,
@@ -116,4 +198,3 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     );
   }
 }
-

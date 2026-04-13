@@ -59,7 +59,7 @@ namespace LearningEnglish.Application.Validators.QuizValidator
             // AvailableFrom phải trong tương lai (nếu set)
             RuleFor(x => x.AvailableFrom)
                 .GreaterThanOrEqualTo(DateTime.UtcNow.AddMinutes(-5))
-                .When(x => x.AvailableFrom.HasValue)
+                .When(x => x.AvailableFrom.HasValue && x is not QuizUpdateDto)
                 .WithMessage("Thời gian mở Quiz phải trong tương lai hoặc hiện tại");
 
             // MaxAttempts phải > 0 nếu có giá trị (null = không giới hạn)

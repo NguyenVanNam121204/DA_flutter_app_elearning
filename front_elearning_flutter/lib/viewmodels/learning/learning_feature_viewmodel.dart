@@ -21,4 +21,8 @@ class LearningFeatureViewModel {
   }) async {
     return _repository.myCourses(pageNumber: pageNumber, pageSize: pageSize);
   }
+
+  Future<Result<void>> joinByClassCode(String classCode) async {
+    return _repository.joinByClassCode(classCode);
+  }
 }

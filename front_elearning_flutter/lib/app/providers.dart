@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/result/result.dart';
 import '../core/logger/app_logger.dart';
 import '../models/assignment/assignment_models.dart';
+import '../models/user/user_model.dart';
 import '../models/learning/course_models.dart';
 import '../models/learning/lecture_models.dart';
 import '../models/learning/lesson_models.dart';
@@ -51,6 +52,8 @@ import 'config/app_config.dart';
 final secureStorageProvider = Provider<SecureStorageService>((ref) {
   return SecureStorageService();
 });
+
+final mainTabIndexProvider = StateProvider<int>((ref) => 0);
 
 final authSessionProvider = Provider<AuthSessionService>((ref) {
   final service = AuthSessionService();
@@ -240,9 +243,7 @@ final myCoursesListProvider =
       };
     });
 
-final profileDataProvider = FutureProvider.autoDispose<UserProfileModel>((
-  ref,
-) async {
+final profileDataProvider = FutureProvider.autoDispose<UserModel>((ref) async {
   final result = await ref.read(profileFeatureViewModelProvider).profile();
   return switch (result) {
     Success(:final value) => value,
@@ -308,6 +309,17 @@ final moduleLecturesProvider = FutureProvider.autoDispose
       };
     });
 
+final moduleLectureTreeProvider = FutureProvider.autoDispose
+    .family<List<LectureTreeItemModel>, String>((ref, moduleId) async {
+      final result = await ref
+          .read(lessonFeatureViewModelProvider)
+          .moduleLectureTree(moduleId);
+      return switch (result) {
+        Success(:final value) => value,
+        Failure(:final error) => throw Exception(error.message),
+      };
+    });
+
 final lectureDetailProvider = FutureProvider.autoDispose
     .family<LectureDetailModel, String>((ref, lectureId) async {
       final result = await ref
@@ -330,11 +342,11 @@ final pronunciationListProvider = FutureProvider.autoDispose
       };
     });
 
-final pronunciationDetailProvider = FutureProvider.autoDispose
-    .family<PronunciationDetailModel, String>((ref, pronunciationId) async {
+final pronunciationSummaryProvider = FutureProvider.autoDispose
+    .family<ModulePronunciationSummaryModel, String>((ref, moduleId) async {
       final result = await ref
           .read(lessonFeatureViewModelProvider)
-          .pronunciationDetail(pronunciationId);
+          .pronunciationSummary(moduleId);
       return switch (result) {
         Success(:final value) => value,
         Failure(:final error) => throw Exception(error.message),
@@ -504,11 +516,9 @@ final homeViewModelProvider = StateNotifierProvider<HomeViewModel, HomeState>((
 final quizScreenViewModelProvider =
     StateNotifierProvider.family<QuizScreenViewModel, QuizScreenState, String>((
       ref,
-      quizId,
+      _,
     ) {
-      final vm = QuizScreenViewModel(ref.read(quizRepositoryProvider));
-      vm.initialize(quizId);
-      return vm;
+      return QuizScreenViewModel(ref.read(quizRepositoryProvider));
     });
 
 final paymentScreenViewModelProvider =
@@ -529,11 +539,11 @@ final flashcardLearningViewModelProvider =
       FlashcardLearningViewModel,
       FlashcardLearningState,
       String
-    >((ref, lessonId) {
+    >((ref, targetKey) {
       final vm = FlashcardLearningViewModel(
         ref.read(flashcardFeatureViewModelProvider),
       );
-      vm.initialize(lessonId);
+      vm.initialize(targetKey);
       return vm;
     });
 

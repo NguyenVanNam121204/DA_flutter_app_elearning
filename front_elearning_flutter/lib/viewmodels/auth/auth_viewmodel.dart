@@ -64,7 +64,9 @@ class AuthViewModel extends StateNotifier<AuthState> {
   Future<void> restoreSession() async {
     final token = await _secureStorageService.getAccessToken();
     if (token != null && token.isNotEmpty) {
-      state = state.copyWith(isAuthenticated: true);
+      state = state.copyWith(isLoading: true, isAuthenticated: true);
+      await refreshProfile(silent: true);
+      state = state.copyWith(isLoading: false);
     }
   }
 
@@ -85,10 +87,18 @@ class AuthViewModel extends StateNotifier<AuthState> {
           await _secureStorageService.saveRefreshToken(auth.refreshToken);
         }
 
+        var user = auth.user;
+        if (user == null || user.fullName.trim().isEmpty) {
+          final profileResult = await _authRepository.profile();
+          if (profileResult case Success<UserModel>(:final value)) {
+            user = value;
+          }
+        }
+
         state = state.copyWith(
           isLoading: false,
           isAuthenticated: true,
-          user: auth.user,
+          user: user,
           clearError: true,
         );
         return true;
@@ -218,6 +228,25 @@ class AuthViewModel extends StateNotifier<AuthState> {
   Future<void> logout() async {
     await _secureStorageService.clearAuth();
     state = const AuthState();
+  }
+
+  Future<void> refreshProfile({bool silent = false}) async {
+    if (!silent) {
+      state = state.copyWith(isLoading: true, clearError: true);
+    }
+
+    final result = await _authRepository.profile();
+    switch (result) {
+      case Success<UserModel>(:final value):
+        state = state.copyWith(
+          user: value,
+          isAuthenticated: true,
+          isLoading: false,
+          clearError: true,
+        );
+      case Failure<UserModel>(:final error):
+        state = state.copyWith(isLoading: false, errorMessage: error.message);
+    }
   }
 
   void clearError() {

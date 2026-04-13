@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/providers.dart';
@@ -54,7 +55,18 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 10),
-                    Text(description),
+                    MarkdownBody(
+                      data: description,
+                      selectable: true,
+                      styleSheet:
+                          MarkdownStyleSheet.fromTheme(
+                            Theme.of(context),
+                          ).copyWith(
+                            p: Theme.of(context).textTheme.bodyLarge,
+                            h2: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                    ),
                   ],
                 ),
               ),

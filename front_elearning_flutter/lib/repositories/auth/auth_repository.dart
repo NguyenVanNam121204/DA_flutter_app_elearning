@@ -4,6 +4,7 @@ import '../../core/constants/api_constants.dart';
 import '../../core/errors/app_error.dart';
 import '../../core/result/result.dart';
 import '../../models/auth/auth_response_model.dart';
+import '../../models/user/user_model.dart';
 import '../../services/api_service.dart';
 
 class AuthRepository {
@@ -130,6 +131,26 @@ class AuthRepository {
       );
 
       return const Success(null);
+    } on DioException catch (error) {
+      return Failure(_mapDioException(error));
+    } catch (_) {
+      return const Failure(AppError(message: 'Đã sảy ra lỗi không mong muốn.'));
+    }
+  }
+
+  Future<Result<UserModel>> profile() async {
+    try {
+      final response = await _apiService.get(ApiConstants.profile);
+      final raw = response.data;
+      if (raw is Map<String, dynamic>) {
+        final data = raw['data'] ?? raw['Data'] ?? raw;
+        if (data is Map<String, dynamic>) {
+          return Success(UserModel.fromJson(data));
+        }
+      }
+      return const Failure(
+        AppError(message: 'Không thể đọc dữ liệu người dùng.'),
+      );
     } on DioException catch (error) {
       return Failure(_mapDioException(error));
     } catch (_) {

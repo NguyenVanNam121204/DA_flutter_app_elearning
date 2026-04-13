@@ -16,6 +16,7 @@ class RoutePaths {
   static const lessonList = '/lesson-list';
   static const lessonDetail = '/lesson-detail';
   static const moduleLearning = '/module-learning';
+  static const pronunciation = '/pronunciation';
   static const pronunciationDetail = '/pronunciation-detail';
   static const lectureDetail = '/lecture-detail';
   static const assignmentDetail = '/assignment-detail';

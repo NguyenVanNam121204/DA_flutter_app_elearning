@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../models/learning/lesson_models.dart';
 import '../../views/screens/auth/forgot_password_screen.dart';
 import '../../views/screens/auth/login_screen.dart';
 import '../../views/screens/auth/register_screen.dart';
@@ -21,6 +22,7 @@ import '../../views/screens/lesson/lesson_detail_screen.dart';
 import '../../views/screens/lesson/lesson_list_screen.dart';
 import '../../views/screens/lesson/lesson_result_screen.dart';
 import '../../views/screens/lesson/module_learning_screen.dart';
+import '../../views/screens/lesson/pronunciation_screen.dart';
 import '../../views/screens/lesson/pronunciation_detail_screen.dart';
 import '../../views/screens/notification/notification_screen.dart';
 import '../../views/screens/payment/payment_failed_screen.dart';
@@ -128,9 +130,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.search,
-        builder: (context, state) => SearchScreen(
-          keyword: state.uri.queryParameters['keyword'] ?? '',
-        ),
+        builder: (context, state) =>
+            SearchScreen(keyword: state.uri.queryParameters['keyword'] ?? ''),
       ),
       GoRoute(
         path: RoutePaths.lessonList,
@@ -151,9 +152,17 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: RoutePaths.pronunciation,
+        builder: (context, state) => PronunciationScreen(
+          moduleId: state.uri.queryParameters['moduleId'] ?? '',
+        ),
+      ),
+      GoRoute(
         path: RoutePaths.pronunciationDetail,
         builder: (context, state) => PronunciationDetailScreen(
-          pronunciationId: state.uri.queryParameters['pronunciationId'] ?? '',
+          moduleId: state.uri.queryParameters['moduleId'] ?? '',
+          startIndex:
+              int.tryParse(state.uri.queryParameters['startIndex'] ?? '0') ?? 0,
         ),
       ),
       GoRoute(
@@ -173,19 +182,23 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.quiz,
         builder: (context, state) => QuizScreen(
           quizId: state.uri.queryParameters['quizId'] ?? '',
+          attemptId: state.uri.queryParameters['attemptId'],
+          forceNewAttempt: state.uri.queryParameters['forceNew'] == '1',
         ),
       ),
       GoRoute(
         path: RoutePaths.lessonResult,
         builder: (context, state) => LessonResultScreen(
           attemptId: state.uri.queryParameters['attemptId'] ?? '',
+          initialResult: state.extra is LessonResultModel
+              ? state.extra as LessonResultModel
+              : null,
         ),
       ),
       GoRoute(
         path: RoutePaths.essay,
-        builder: (context, state) => EssayScreen(
-          essayId: state.uri.queryParameters['essayId'] ?? '',
-        ),
+        builder: (context, state) =>
+            EssayScreen(essayId: state.uri.queryParameters['essayId'] ?? ''),
       ),
       GoRoute(
         path: RoutePaths.payment,
@@ -224,6 +237,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.flashcardLearning,
         builder: (context, state) => FlashCardLearningScreen(
           lessonId: state.uri.queryParameters['lessonId'] ?? '',
+          moduleId: state.uri.queryParameters['moduleId'] ?? '',
         ),
       ),
       GoRoute(
@@ -289,5 +303,3 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-
-

@@ -37,13 +37,17 @@ class FlashcardLearningViewModel extends StateNotifier<FlashcardLearningState> {
     : super(const FlashcardLearningState());
 
   final FlashcardFeatureViewModel _feature;
-  String? _lessonId;
+  String? _targetKey;
 
-  Future<void> initialize(String lessonId) async {
-    if (_lessonId == lessonId && !state.isLoading) return;
-    _lessonId = lessonId;
+  Future<void> initialize(String targetKey) async {
+    if (_targetKey == targetKey && !state.isLoading) return;
+    _targetKey = targetKey;
     state = const FlashcardLearningState(isLoading: true);
-    final result = await _feature.lessonFlashcards(lessonId);
+    final result = targetKey.startsWith('module:')
+        ? await _feature.moduleFlashcards(targetKey.substring(7))
+        : await _feature.lessonFlashcards(
+            targetKey.replaceFirst('lesson:', ''),
+          );
     switch (result) {
       case Success(:final value):
         state = state.copyWith(

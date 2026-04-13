@@ -18,9 +18,10 @@ class LessonRepository {
       final response = await _apiService.get(
         ApiConstants.userLessonsByCourse(courseId),
       );
-      return Success(
-        _asList(response.data).map(LessonListItemModel.fromJson).toList(),
-      );
+      final lessons =
+          _asList(response.data).map(LessonListItemModel.fromJson).toList()
+            ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex));
+      return Success(lessons);
     } on DioException catch (error) {
       return Failure(_mapDioException(error));
     } catch (_) {
@@ -43,9 +44,11 @@ class LessonRepository {
       return Success(
         LessonDetailBundleModel(
           lesson: LessonDetailModel.fromJson(_asMap(lessonResponse.data)),
-          modules: _asList(
-            modulesResponse.data,
-          ).map(LessonModuleItemModel.fromJson).toList(),
+          modules:
+              _asList(
+                  modulesResponse.data,
+                ).map(LessonModuleItemModel.fromJson).toList()
+                ..sort((a, b) => a.orderIndex.compareTo(b.orderIndex)),
         ),
       );
     } on DioException catch (error) {
@@ -65,6 +68,17 @@ class LessonRepository {
       return Failure(_mapDioException(error));
     } catch (_) {
       return const Failure(AppError(message: 'Unable to load lesson result.'));
+    }
+  }
+
+  Future<Result<void>> startModule(String moduleId) async {
+    try {
+      await _apiService.post(ApiConstants.userStartModule(moduleId));
+      return const Success(null);
+    } on DioException catch (error) {
+      return Failure(_mapDioException(error));
+    } catch (_) {
+      return const Failure(AppError(message: 'Unable to start module.'));
     }
   }
 

@@ -52,6 +52,20 @@ class LearningRepository {
     }
   }
 
+  Future<Result<void>> joinByClassCode(String classCode) async {
+    try {
+      await _apiService.post(
+        ApiConstants.joinByClassCode,
+        data: {'classCode': classCode},
+      );
+      return const Success(null);
+    } on DioException catch (error) {
+      return Failure(_mapDioException(error));
+    } catch (_) {
+      return const Failure(AppError(message: 'Unable to join class by code.'));
+    }
+  }
+
   List<LearningVocabularyItem> _asVocabularyList(Object? raw) {
     if (raw is Map<String, dynamic>) {
       final data = raw['data'] ?? raw['Data'];

@@ -1,7 +1,6 @@
 class ApiConstants {
   static const authBase = '/api/auth';
   static const userBase = '/api/user';
-  static const teacherBase = '/api/teacher';
   static const sharedBase = '/api/shared';
 
   static const login = '$authBase/login';
@@ -31,11 +30,6 @@ class ApiConstants {
   static const userEssaySubmissions = '$userBase/essay-submissions';
   static const userEssaySubmissionsSubmit = '$userEssaySubmissions/submit';
   static const userAssessments = '$userBase/assessments';
-
-  static const teacherCourses = '$teacherBase/courses';
-  static const teacherLessons = '$teacherBase/lessons';
-  static const teacherEssaySubmissions = '$teacherBase/essay-submissions';
-  static const teacherQuizAttempts = '$teacherBase/quiz-attempts';
 
   static String notificationMarkAsRead(String id) =>
       '$notifications/$id/mark-as-read';
@@ -100,19 +94,4 @@ class ApiConstants {
   static const userFlashcardReview = '$userBase/flashcard-review';
   static String userFlashcardReviewStartModule(String moduleId) =>
       '$userFlashcardReview/start-module/$moduleId';
-
-  static String teacherCourseDetail(String courseId) =>
-      '$teacherCourses/$courseId';
-  static String teacherCourseStudents(String courseId) =>
-      '$teacherCourses/$courseId/students';
-  static String teacherLessonDetail(String lessonId) =>
-      '$teacherLessons/$lessonId';
-  static String teacherEssaySubmissionsByEssay(String essayId) =>
-      '$teacherEssaySubmissions/essay/$essayId';
-  static String teacherSubmissionDetail(String submissionId) =>
-      '$teacherEssaySubmissions/$submissionId';
-  static String teacherQuizAttemptsByQuiz(String quizId) =>
-      '$teacherQuizAttempts/quiz/$quizId/paged';
-  static String teacherQuizAttemptDetail(String attemptId) =>
-      '$teacherQuizAttempts/$attemptId/review';
 }

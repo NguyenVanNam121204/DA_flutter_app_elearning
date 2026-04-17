@@ -31,16 +31,4 @@ class RoutePaths {
   static const notifications = '/notifications';
   static const flashcardLearning = '/flashcard-learning';
   static const flashcardReview = '/flashcard-review';
-
-  // Teacher flow
-  static const teacherHome = '/teacher/home';
-  static const teacherClasses = '/teacher/classes';
-  static const teacherCreateCourse = '/teacher/create-course';
-  static const teacherCourseDetail = '/teacher/course-detail';
-  static const teacherLessonDetail = '/teacher/lesson-detail';
-  static const teacherCourseSubmissions = '/teacher/course-submissions';
-  static const teacherEssaySubmissions = '/teacher/essay-submissions';
-  static const teacherSubmissionDetail = '/teacher/submission-detail';
-  static const teacherQuizAttempts = '/teacher/quiz-attempts';
-  static const teacherQuizAttemptDetail = '/teacher/quiz-attempt-detail';
 }

@@ -9,7 +9,6 @@ class UserModel {
     this.role,
     this.roles = const [],
     this.avatarUrl,
-    this.teacherSubscription,
   });
 
   final String id;
@@ -21,7 +20,6 @@ class UserModel {
   final String? role;
   final List<String> roles;
   final String? avatarUrl;
-  final TeacherSubscriptionModel? teacherSubscription;
 
   String get displayName {
     if (fullName.trim().isNotEmpty) return fullName.trim();
@@ -30,11 +28,6 @@ class UserModel {
     final combined = '$f $l'.trim();
     if (combined.isNotEmpty) return combined;
     return email;
-  }
-
-  bool get canSwitchToTeacher {
-    final teacherInRoles = roles.any((r) => r.toLowerCase() == 'teacher');
-    return teacherInRoles || (teacherSubscription?.isTeacher ?? false);
   }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -64,9 +57,6 @@ class UserModel {
                   json['profilePictureUrl'] ??
                   json['ProfilePictureUrl'])
               ?.toString(),
-      teacherSubscription: TeacherSubscriptionModel.fromDynamic(
-        json['teacherSubscription'] ?? json['TeacherSubscription'],
-      ),
     );
   }
 
@@ -87,45 +77,5 @@ class UserModel {
       return [raw];
     }
     return const [];
-  }
-}
-
-class TeacherSubscriptionModel {
-  const TeacherSubscriptionModel({
-    required this.isTeacher,
-    required this.packageLevel,
-    this.expiresAt,
-  });
-
-  final bool isTeacher;
-  final String packageLevel;
-  final DateTime? expiresAt;
-
-  bool get isPremium => packageLevel.toLowerCase() == 'premium';
-
-  static TeacherSubscriptionModel? fromDynamic(dynamic raw) {
-    if (raw is! Map<String, dynamic>) return null;
-
-    final expiresRaw =
-        raw['expiresAt'] ??
-        raw['ExpiresAt'] ??
-        raw['endDate'] ??
-        raw['EndDate'];
-    DateTime? expires;
-    if (expiresRaw != null) {
-      expires = DateTime.tryParse(expiresRaw.toString());
-    }
-
-    return TeacherSubscriptionModel(
-      isTeacher: (raw['isTeacher'] ?? raw['IsTeacher'] ?? false) == true,
-      packageLevel:
-          (raw['packageLevel'] ??
-                  raw['PackageLevel'] ??
-                  raw['subscriptionType'] ??
-                  raw['SubscriptionType'] ??
-                  'Basic')
-              .toString(),
-      expiresAt: expires,
-    );
   }
 }

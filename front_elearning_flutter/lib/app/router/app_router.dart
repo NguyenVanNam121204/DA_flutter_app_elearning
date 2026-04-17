@@ -31,16 +31,6 @@ import '../../views/screens/payment/payment_screen.dart';
 import '../../views/screens/payment/payment_success_screen.dart';
 import '../../views/screens/quiz/quiz_screen.dart';
 import '../../views/screens/search/search_screen.dart';
-import '../../views/screens/teacher/create_course_screen.dart';
-import '../../views/screens/teacher/teacher_class_list_screen.dart';
-import '../../views/screens/teacher/teacher_course_submissions_screen.dart';
-import '../../views/screens/teacher/teacher_course_detail_screen.dart';
-import '../../views/screens/teacher/teacher_essay_submissions_screen.dart';
-import '../../views/screens/teacher/teacher_home_screen.dart';
-import '../../views/screens/teacher/teacher_lesson_detail_screen.dart';
-import '../../views/screens/teacher/teacher_quiz_attempt_detail_screen.dart';
-import '../../views/screens/teacher/teacher_quiz_attempts_screen.dart';
-import '../../views/screens/teacher/teacher_submission_detail_screen.dart';
 import '../providers.dart';
 import 'route_paths.dart';
 
@@ -243,62 +233,6 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.flashcardReview,
         builder: (context, state) => const FlashCardReviewSession(),
-      ),
-      GoRoute(
-        path: RoutePaths.teacherHome,
-        builder: (context, state) => const TeacherHomeScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.teacherClasses,
-        builder: (context, state) => TeacherClassListScreen(
-          courseId: state.uri.queryParameters['courseId'] ?? '',
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.teacherCreateCourse,
-        builder: (context, state) => const CreateCourseScreen(),
-      ),
-      GoRoute(
-        path: RoutePaths.teacherCourseDetail,
-        builder: (context, state) => TeacherCourseDetailScreen(
-          courseId: state.uri.queryParameters['courseId'] ?? '',
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.teacherLessonDetail,
-        builder: (context, state) => TeacherLessonDetailScreen(
-          lessonId: state.uri.queryParameters['lessonId'] ?? '',
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.teacherCourseSubmissions,
-        builder: (context, state) => TeacherCourseSubmissionsScreen(
-          essayId: state.uri.queryParameters['essayId'] ?? '',
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.teacherEssaySubmissions,
-        builder: (context, state) => TeacherEssaySubmissionsScreen(
-          essayId: state.uri.queryParameters['essayId'] ?? '',
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.teacherSubmissionDetail,
-        builder: (context, state) => TeacherSubmissionDetailScreen(
-          submissionId: state.uri.queryParameters['submissionId'] ?? '',
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.teacherQuizAttempts,
-        builder: (context, state) => TeacherQuizAttemptsScreen(
-          quizId: state.uri.queryParameters['quizId'] ?? '',
-        ),
-      ),
-      GoRoute(
-        path: RoutePaths.teacherQuizAttemptDetail,
-        builder: (context, state) => TeacherQuizAttemptDetailScreen(
-          attemptId: state.uri.queryParameters['attemptId'] ?? '',
-        ),
       ),
     ],
   );

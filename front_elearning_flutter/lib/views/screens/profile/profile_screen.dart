@@ -345,10 +345,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           final joinedRoles = user.roles.isEmpty
               ? (user.role ?? '-')
               : user.roles.join(', ');
-          final teacherSub = user.teacherSubscription;
-          final teacherSubText = teacherSub == null
-              ? null
-              : '${teacherSub.isPremium ? 'Premium' : 'Cơ bản'}${teacherSub.expiresAt != null ? ' • Hết hạn ${teacherSub.expiresAt!.day}/${teacherSub.expiresAt!.month}/${teacherSub.expiresAt!.year}' : ''}';
 
           return ListView(
             padding: EdgeInsets.fromLTRB(16, 8, 16, bottomNavSafePadding),
@@ -396,16 +392,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     subtitle: user.phoneNumber,
                     icon: Icons.phone_rounded,
                     onTap: () => _showUpdateProfileDialog(user),
-                  ),
-                ),
-              if (user.canSwitchToTeacher)
-                CatalunyaReveal(
-                  delay: const Duration(milliseconds: 250),
-                  child: ProfileActionTile(
-                    title: 'Chuyển giao diện giáo viên',
-                    subtitle: teacherSubText,
-                    icon: Icons.school_rounded,
-                    onTap: () => context.push(RoutePaths.teacherHome),
                   ),
                 ),
               CatalunyaReveal(

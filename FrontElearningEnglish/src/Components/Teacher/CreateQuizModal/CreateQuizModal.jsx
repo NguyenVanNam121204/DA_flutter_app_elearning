@@ -197,16 +197,23 @@ export default function CreateQuizModal({ show, onClose, onSuccess, assessmentId
       }
     }
 
-    // Duration: > 0 nếu có value - TÙY CHỌN (nhưng frontend yêu cầu bắt buộc)
-    if (!duration || duration === "" || isNaN(parseInt(duration))) {
-      newErrors.duration = "Thời gian làm bài là bắt buộc";
-    } else if (parseInt(duration) <= 0) {
-      newErrors.duration = "Thời gian làm bài phải lớn hơn 0 phút";
+    // Duration: tùy chọn, nếu có thì > 0
+    if (duration !== "" && duration !== null && duration !== undefined) {
+      if (isNaN(parseInt(duration)) || parseInt(duration) <= 0) {
+        newErrors.duration = "Thời gian làm bài phải lớn hơn 0 phút";
+      }
     }
 
-    // AvailableFrom: >= now nếu có value - TÙY CHỌN
-    if (availableFrom && availableFrom < now) {
+    // AvailableFrom:
+    // - Create: nếu có value thì phải >= now
+    // - Update: cho phép giữ giá trị quá khứ để vẫn cập nhật được các field khác
+    if (!isUpdateMode && availableFrom && availableFrom < now) {
       newErrors.availableFrom = "Thời gian mở Quiz phải trong tương lai hoặc hiện tại";
+    }
+
+    // Nếu update và user chỉnh AvailableFrom, chỉ validate khi giá trị là invalid date
+    if (isUpdateMode && availableFrom && Number.isNaN(availableFrom.getTime())) {
+      newErrors.availableFrom = "Thời gian mở Quiz không hợp lệ";
     }
 
     // MaxAttempts: tùy chọn, nếu có giá trị thì phải > 0 (null = không giới hạn)
@@ -221,10 +228,47 @@ export default function CreateQuizModal({ show, onClose, onSuccess, assessmentId
     return Object.keys(newErrors).length === 0;
   };
 
+  const now = new Date();
+  now.setSeconds(0, 0);
+
+  // Form validation check - khớp với backend validator
+  const isFormValid = 
+    title.trim() && 
+    title.trim().length <= 200 &&
+    (!description || description.trim().length <= 1000) &&
+    (!instructions || instructions.trim().length <= 2000) &&
+    totalQuestions && 
+    !isNaN(parseInt(totalQuestions)) &&
+    parseInt(totalQuestions) >= 0 &&
+    totalPossibleScore && 
+    !isNaN(parseFloat(totalPossibleScore)) &&
+    parseFloat(totalPossibleScore) > 0 &&
+    (passingScore === "" || (passingScore !== "" && !isNaN(parseInt(passingScore)) && parseInt(passingScore) > 0)) &&
+    (duration === "" || (duration && !isNaN(parseInt(duration)) && parseInt(duration) > 0)) &&
+    (isUpdateMode || !availableFrom || availableFrom >= now) &&
+    (maxAttempts === "" || (maxAttempts && !isNaN(parseInt(maxAttempts)) && parseInt(maxAttempts) > 0));
+
+  const canClickSubmit = !submitting && !loadingQuiz;
+
+  const scrollToFirstErrorField = () => {
+    const selector = ".create-quiz-modal .is-invalid, .create-quiz-modal .alert-danger";
+    const firstErrorEl = document.querySelector(selector);
+    if (firstErrorEl && typeof firstErrorEl.scrollIntoView === "function") {
+      firstErrorEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e?.preventDefault) e.preventDefault();
 
     if (!validateForm()) {
+      setErrors((prev) => ({
+        ...prev,
+        submit:
+          prev.submit ||
+          "Dữ liệu chưa hợp lệ. Vui lòng kiểm tra các trường được đánh dấu đỏ.",
+      }));
+      setTimeout(scrollToFirstErrorField, 0);
       return;
     }
 
@@ -244,7 +288,7 @@ export default function CreateQuizModal({ show, onClose, onSuccess, assessmentId
         passingScore: passingScore && passingScore !== "" && !isNaN(parseInt(passingScore)) 
           ? parseInt(passingScore) 
           : null,
-        // Duration: null nếu không có giá trị, hoặc int nếu có (nhưng frontend yêu cầu bắt buộc)
+        // Duration: null nếu không có giá trị, hoặc int nếu có
         duration: duration && duration !== "" && !isNaN(parseInt(duration)) 
           ? parseInt(duration) 
           : null,
@@ -281,35 +325,15 @@ export default function CreateQuizModal({ show, onClose, onSuccess, assessmentId
       console.error(`Error ${isUpdateMode ? "updating" : "creating"} quiz:`, error);
       const errorMessage = error.response?.data?.message || error.message || (isUpdateMode ? "Có lỗi xảy ra khi cập nhật Quiz" : "Có lỗi xảy ra khi tạo Quiz");
       setErrors({ ...errors, submit: errorMessage });
+      setTimeout(scrollToFirstErrorField, 0);
     } finally {
       setSubmitting(false);
     }
   };
 
   // Get current date/time for min values
-  const now = new Date();
-  now.setSeconds(0, 0);
-
-  // Form validation check - khớp với backend validator
-  const isFormValid = 
-    title.trim() && 
-    title.trim().length <= 200 &&
-    (!description || description.trim().length <= 1000) &&
-    (!instructions || instructions.trim().length <= 2000) &&
-    totalQuestions && 
-    !isNaN(parseInt(totalQuestions)) &&
-    parseInt(totalQuestions) >= 0 &&
-    totalPossibleScore && 
-    !isNaN(parseFloat(totalPossibleScore)) &&
-    parseFloat(totalPossibleScore) > 0 &&
-    (passingScore === "" || (passingScore !== "" && !isNaN(parseInt(passingScore)) && parseInt(passingScore) > 0)) &&
-    duration && 
-    !isNaN(parseInt(duration)) &&
-    parseInt(duration) > 0 &&
-    (!availableFrom || availableFrom >= now) &&
-    (maxAttempts === "" || (maxAttempts && !isNaN(parseInt(maxAttempts)) && parseInt(maxAttempts) > 0));
-
   return (
+
     <>
     <Modal 
       show={show} 
@@ -685,7 +709,7 @@ export default function CreateQuizModal({ show, onClose, onSuccess, assessmentId
                 value={maxAttempts}
                 onChange={(e) => {
                   setMaxAttempts(e.target.value);
-                  setErrors({ ...errors, maxAttempts: null });
+                  setErrors({ ...errors, maxAttempts: null, submit: null });
                 }}
                 placeholder="Để trống = không giới hạn"
                 min="1"
@@ -715,8 +739,8 @@ export default function CreateQuizModal({ show, onClose, onSuccess, assessmentId
         </Button>
         <Button
           variant="primary"
-          onClick={handleSubmit}
-          disabled={!isFormValid || submitting || loadingQuiz}
+          onClick={() => handleSubmit()}
+          disabled={!canClickSubmit || (!isUpdateMode && !isFormValid)}
           type="button"
         >
           {submitting ? (isUpdateMode ? "Đang cập nhật..." : "Đang tạo...") : (isUpdateMode ? "Cập nhật" : "Tạo")}

@@ -29,17 +29,14 @@ export default function AssessmentInfoModal({
     const checkQuizProgress = useCallback(async (rawQuizId) => {
         setCheckingProgress(true);
         const quizId = parseInt(rawQuizId); 
-        console.log("🔍 [AssessmentInfoModal] Checking active attempt via API for quizId:", quizId);
         
         try {
             // New logic: Call backend API instead of checking localStorage
             const response = await quizAttemptService.checkActiveAttempt(quizId);
-            console.log("📥 [AssessmentInfoModal] CheckActive API Response:", response.data);
 
             // Only treat as in-progress when backend explicitly reports hasActiveAttempt === true
             if (response.data?.success && response.data?.data?.hasActiveAttempt) {
                 const attemptData = response.data.data;
-                console.log("✅ [AssessmentInfoModal] Found active attempt:", attemptData);
                 setInProgressAttempt({
                     attemptId: attemptData.attemptId || attemptData.AttemptId,
                     quizId: quizId,
@@ -47,11 +44,9 @@ export default function AssessmentInfoModal({
                     timeSpentSeconds: attemptData.timeSpentSeconds || attemptData.TimeSpentSeconds || 0
                 });
             } else {
-                console.log("ℹ️ [AssessmentInfoModal] No active attempt found");
                 setInProgressAttempt(null);
             }
-        } catch (err) {
-            console.error("❌ [AssessmentInfoModal] Error checking quiz progress:", err);
+        } catch {
             setInProgressAttempt(null);
         } finally {
             setCheckingProgress(false);
@@ -71,8 +66,7 @@ export default function AssessmentInfoModal({
             } else {
                 setEssayHasSubmission(false);
             }
-        } catch (err) {
-            console.log("ℹ️ [AssessmentInfoModal] No essay submission found:", err);
+        } catch {
             setEssayHasSubmission(false);
         }
     }, []);
@@ -117,8 +111,7 @@ export default function AssessmentInfoModal({
                 } else {
                     setError("Không tìm thấy thông tin quiz hoặc essay");
                 }
-            } catch (err) {
-                console.error("Error loading assessment data:", err);
+            } catch {
                 setError("Không thể tải dữ liệu");
             } finally {
                 setLoading(false);
@@ -178,7 +171,6 @@ export default function AssessmentInfoModal({
 
                 // Nếu không phải attempt mới và có in-progress attempt, dùng nó
                 if (!isNewAttempt && inProgressAttempt && inProgressAttempt.attemptId) {
-                    console.log("▶️ [AssessmentInfoModal] Continuing in-progress attempt:", inProgressAttempt.attemptId);
                     onStartQuiz({
                         ...assessment,
                         attemptId: inProgressAttempt.attemptId,
@@ -189,7 +181,6 @@ export default function AssessmentInfoModal({
                 }
                 
                 // Start new quiz attempt
-                console.log("🆕 [AssessmentInfoModal] Starting new quiz attempt");
                 const response = await quizAttemptService.start(quiz.quizId || quiz.QuizId);
                 if (response.data?.success && response.data?.data) {
                     const attemptData = response.data.data;
@@ -210,7 +201,6 @@ export default function AssessmentInfoModal({
                     setLoading(false);
                 }
             } catch (err) {
-                console.error("❌ [AssessmentInfoModal] Error starting quiz:", err);
                 // If backend returns an active-attempt error, show the card; otherwise show generic error
                 const msg = err.response?.data?.message || "Không thể bắt đầu làm quiz";
                 if (msg && /active|already|đang làm|đã có/i.test(msg)) {

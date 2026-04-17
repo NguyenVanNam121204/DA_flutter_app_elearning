@@ -1,15 +1,31 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 
 class AppConfig {
+  static String _normalizeBaseUrlForPlatform(String value) {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+      return value;
+    }
+
+    return value
+        .replaceFirst('://localhost', '://10.0.2.2')
+        .replaceFirst('://127.0.0.1', '://10.0.2.2');
+  }
+
   static String get apiBaseUrl {
     const define = String.fromEnvironment('API_BASE_URL');
     if (define.isNotEmpty) {
-      return define;
+      return _normalizeBaseUrlForPlatform(define);
     }
 
     final env = dotenv.env['API_BASE_URL'];
     if (env != null && env.isNotEmpty) {
-      return env;
+      return _normalizeBaseUrlForPlatform(env);
+    }
+
+    // Android emulator cannot reach host machine via localhost.
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:5030';
     }
 
     return 'http://localhost:5030';

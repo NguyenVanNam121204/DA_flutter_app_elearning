@@ -1,13 +1,36 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../views/screens/forgot_password_screen.dart';
-import '../../views/screens/home_screen.dart';
-import '../../views/screens/login_screen.dart';
-import '../../views/screens/register_screen.dart';
-import '../../views/screens/reset_password_screen.dart';
-import '../../views/screens/verify_email_otp_screen.dart';
-import '../../views/screens/verify_reset_otp_screen.dart';
+import '../../models/learning/lesson_models.dart';
+import '../../views/screens/auth/forgot_password_screen.dart';
+import '../../views/screens/auth/login_screen.dart';
+import '../../views/screens/auth/register_screen.dart';
+import '../../views/screens/auth/reset_password_screen.dart';
+import '../../views/screens/auth/verify_email_otp_screen.dart';
+import '../../views/screens/auth/verify_reset_otp_screen.dart';
+import '../../views/screens/home/home_screen.dart';
+import '../../views/screens/loading/loading_page.dart';
+import '../../views/screens/navigation/main_tabs_screen.dart';
+import '../../views/screens/pro/pro_screen.dart';
+import '../../views/screens/assignment/assignment_detail_screen.dart';
+import '../../views/screens/assignment/essay_screen.dart';
+import '../../views/screens/course/course_detail_screen.dart';
+import '../../views/screens/flashcard/flashcard_learning_screen.dart';
+import '../../views/screens/flashcard/flashcard_review_session_screen.dart';
+import '../../views/screens/lesson/lecture_detail_screen.dart';
+import '../../views/screens/lesson/lesson_detail_screen.dart';
+import '../../views/screens/lesson/lesson_list_screen.dart';
+import '../../views/screens/lesson/lesson_result_screen.dart';
+import '../../views/screens/lesson/module_learning_screen.dart';
+import '../../views/screens/lesson/pronunciation_screen.dart';
+import '../../views/screens/lesson/pronunciation_detail_screen.dart';
+import '../../views/screens/notification/notification_screen.dart';
+import '../../views/screens/payment/payment_failed_screen.dart';
+import '../../views/screens/payment/payment_history_screen.dart';
+import '../../views/screens/payment/payment_screen.dart';
+import '../../views/screens/payment/payment_success_screen.dart';
+import '../../views/screens/quiz/quiz_screen.dart';
+import '../../views/screens/search/search_screen.dart';
 import '../providers.dart';
 import 'route_paths.dart';
 
@@ -33,12 +56,16 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (isAuth && isAuthPage) {
-        return RoutePaths.home;
+        return RoutePaths.mainApp;
       }
 
       return null;
     },
     routes: [
+      GoRoute(
+        path: RoutePaths.loading,
+        builder: (context, state) => const LoadingPage(),
+      ),
       GoRoute(
         path: RoutePaths.login,
         builder: (context, state) => const LoginScreen(),
@@ -77,8 +104,136 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: RoutePaths.home,
         builder: (context, state) => const HomeScreen(),
       ),
+      GoRoute(
+        path: RoutePaths.mainApp,
+        builder: (context, state) => const MainTabsScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.pro,
+        builder: (context, state) => const ProScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.courseDetail,
+        builder: (context, state) => CourseDetailScreen(
+          courseId: state.uri.queryParameters['courseId'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.search,
+        builder: (context, state) =>
+            SearchScreen(keyword: state.uri.queryParameters['keyword'] ?? ''),
+      ),
+      GoRoute(
+        path: RoutePaths.lessonList,
+        builder: (context, state) => LessonListScreen(
+          courseId: state.uri.queryParameters['courseId'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.lessonDetail,
+        builder: (context, state) => LessonDetailScreen(
+          lessonId: state.uri.queryParameters['lessonId'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.moduleLearning,
+        builder: (context, state) => ModuleLearningScreen(
+          moduleId: state.uri.queryParameters['moduleId'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.pronunciation,
+        builder: (context, state) => PronunciationScreen(
+          moduleId: state.uri.queryParameters['moduleId'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.pronunciationDetail,
+        builder: (context, state) => PronunciationDetailScreen(
+          moduleId: state.uri.queryParameters['moduleId'] ?? '',
+          startIndex:
+              int.tryParse(state.uri.queryParameters['startIndex'] ?? '0') ?? 0,
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.lectureDetail,
+        builder: (context, state) => LectureDetailScreen(
+          lectureId: state.uri.queryParameters['lectureId'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.assignmentDetail,
+        builder: (context, state) => AssignmentDetailScreen(
+          assessmentId: state.uri.queryParameters['assessmentId'] ?? '',
+          moduleId: state.uri.queryParameters['moduleId'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.quiz,
+        builder: (context, state) => QuizScreen(
+          quizId: state.uri.queryParameters['quizId'] ?? '',
+          attemptId: state.uri.queryParameters['attemptId'],
+          forceNewAttempt: state.uri.queryParameters['forceNew'] == '1',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.lessonResult,
+        builder: (context, state) => LessonResultScreen(
+          attemptId: state.uri.queryParameters['attemptId'] ?? '',
+          initialResult: state.extra is LessonResultModel
+              ? state.extra as LessonResultModel
+              : null,
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.essay,
+        builder: (context, state) =>
+            EssayScreen(essayId: state.uri.queryParameters['essayId'] ?? ''),
+      ),
+      GoRoute(
+        path: RoutePaths.payment,
+        builder: (context, state) => PaymentScreen(
+          paymentId: state.uri.queryParameters['paymentId'] ?? '',
+          courseId: state.uri.queryParameters['courseId'] ?? '',
+          courseTitle: state.uri.queryParameters['courseTitle'] ?? '',
+          packageId: state.uri.queryParameters['packageId'] ?? '',
+          packageName: state.uri.queryParameters['packageName'] ?? '',
+          price: state.uri.queryParameters['price'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.paymentSuccess,
+        builder: (context, state) => PaymentSuccessScreen(
+          paymentId: state.uri.queryParameters['paymentId'] ?? '',
+          courseId: state.uri.queryParameters['courseId'] ?? '',
+          orderCode: state.uri.queryParameters['orderCode'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.paymentFailed,
+        builder: (context, state) => PaymentFailedScreen(
+          reason: state.uri.queryParameters['reason'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.paymentHistory,
+        builder: (context, state) => const PaymentHistoryScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.notifications,
+        builder: (context, state) => const NotificationScreen(),
+      ),
+      GoRoute(
+        path: RoutePaths.flashcardLearning,
+        builder: (context, state) => FlashCardLearningScreen(
+          lessonId: state.uri.queryParameters['lessonId'] ?? '',
+          moduleId: state.uri.queryParameters['moduleId'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.flashcardReview,
+        builder: (context, state) => const FlashCardReviewSession(),
+      ),
     ],
   );
 });
-
-

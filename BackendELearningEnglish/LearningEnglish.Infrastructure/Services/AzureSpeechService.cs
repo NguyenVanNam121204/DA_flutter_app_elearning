@@ -156,22 +156,21 @@ namespace LearningEnglish.Infrastructure.Services
             {
                 try
                 {
+                    var paResult = PronunciationAssessmentResult.FromResult(result);
+
                     // Get detailed JSON result
                     var jsonResult = result.Properties.GetProperty(
-                        PropertyId.SpeechServiceResponse_JsonResult
+                        PropertyId.SpeechServiceResponse_JsonResult,
+                        string.Empty
                     );
 
                     _logger.LogDebug("Azure JSON Response: {Json}", jsonResult);
 
-                    var jsonDoc = JsonDocument.Parse(jsonResult);
-                    var nBest = jsonDoc.RootElement.GetProperty("NBest")[0];
-
-                    // Extract overall scores
-                    var pronunciationAssessment = nBest.GetProperty("PronunciationAssessment");
-                    var accuracyScore = pronunciationAssessment.GetProperty("AccuracyScore").GetDouble();
-                    var fluencyScore = pronunciationAssessment.GetProperty("FluencyScore").GetDouble();
-                    var completenessScore = pronunciationAssessment.GetProperty("CompletenessScore").GetDouble();
-                    var pronunciationScore = pronunciationAssessment.GetProperty("PronScore").GetDouble();
+                    // Use SDK result as stable source for overall scores.
+                    var accuracyScore = paResult.AccuracyScore;
+                    var fluencyScore = paResult.FluencyScore;
+                    var completenessScore = paResult.CompletenessScore;
+                    var pronunciationScore = paResult.PronunciationScore;
 
                     _logger.LogInformation(
                         "Scores - Accuracy: {Accuracy}, Fluency: {Fluency}, Completeness: {Completeness}, Pronunciation: {Pronunciation}",
@@ -183,56 +182,85 @@ namespace LearningEnglish.Infrastructure.Services
                     var problemPhonemes = new List<string>();
                     var strongPhonemes = new List<string>();
 
-                    if (nBest.TryGetProperty("Words", out var wordsArray))
+                    if (!string.IsNullOrWhiteSpace(jsonResult))
                     {
-                        foreach (var word in wordsArray.EnumerateArray())
+                        var jsonDoc = JsonDocument.Parse(jsonResult);
+                        if (jsonDoc.RootElement.TryGetProperty("NBest", out var nBestArray) &&
+                            nBestArray.ValueKind == JsonValueKind.Array &&
+                            nBestArray.GetArrayLength() != 0)
                         {
-                            var wordDetail = new WordPronunciationDetail
+                            var nBest = nBestArray[0];
+                            if (nBest.TryGetProperty("Words", out var wordsArray))
                             {
-                                Word = word.GetProperty("Word").GetString() ?? "",
-                                AccuracyScore = word.GetProperty("PronunciationAssessment")
-                                    .GetProperty("AccuracyScore").GetDouble(),
-                                ErrorType = word.GetProperty("PronunciationAssessment")
-                                    .GetProperty("ErrorType").GetString() ?? "None"
-                            };
-
-                            if (word.TryGetProperty("Offset", out var offset))
-                                wordDetail.Offset = offset.GetInt32();
-                            if (word.TryGetProperty("Duration", out var duration))
-                                wordDetail.Duration = duration.GetInt32();
-
-                            // Parse phonemes
-                            if (word.TryGetProperty("Phonemes", out var phonemesArray))
-                            {
-                                foreach (var phoneme in phonemesArray.EnumerateArray())
+                                foreach (var word in wordsArray.EnumerateArray())
                                 {
-                                    var phonemeIPA = phoneme.GetProperty("Phoneme").GetString() ?? "";
-                                    var phonemeScore = phoneme.GetProperty("PronunciationAssessment")
-                                        .GetProperty("AccuracyScore").GetDouble();
+                                    var wordStr = word.TryGetProperty("Word", out var wProp) ? wProp.GetString() ?? "" : "";
+                                    double wordAccuracy = 0;
+                                    string errorType = "None";
 
-                                    var phonemeDetail = new PhonemeDetail
+                                    if (word.TryGetProperty("PronunciationAssessment", out var paProp))
                                     {
-                                        Phoneme = phonemeIPA,
-                                        PhonemeDisplay = ConvertIPAToDisplay(phonemeIPA),
-                                        AccuracyScore = phonemeScore
+                                        if (paProp.TryGetProperty("AccuracyScore", out var accProp) && accProp.ValueKind == JsonValueKind.Number)
+                                            wordAccuracy = accProp.GetDouble();
+                                        if (paProp.TryGetProperty("ErrorType", out var errProp) && errProp.ValueKind == JsonValueKind.String)
+                                            errorType = errProp.GetString() ?? "None";
+                                    }
+
+                                    var wordDetail = new WordPronunciationDetail
+                                    {
+                                        Word = wordStr,
+                                        AccuracyScore = wordAccuracy,
+                                        ErrorType = errorType
                                     };
 
-                                    if (phoneme.TryGetProperty("Offset", out var pOffset))
-                                        phonemeDetail.Offset = pOffset.GetInt32();
-                                    if (phoneme.TryGetProperty("Duration", out var pDuration))
-                                        phonemeDetail.Duration = pDuration.GetInt32();
+                                    if (word.TryGetProperty("Offset", out var offset) && offset.ValueKind == JsonValueKind.Number)
+                                        wordDetail.Offset = offset.GetInt32();
+                                    if (word.TryGetProperty("Duration", out var duration) && duration.ValueKind == JsonValueKind.Number)
+                                        wordDetail.Duration = duration.GetInt32();
 
-                                    // Classify phonemes
-                                    if (phonemeScore < 60)
-                                        problemPhonemes.Add(phonemeDetail.PhonemeDisplay);
-                                    else if (phonemeScore >= 85)
-                                        strongPhonemes.Add(phonemeDetail.PhonemeDisplay);
+                                    // Parse phonemes
+                                    if (word.TryGetProperty("Phonemes", out var phonemesArray) && phonemesArray.ValueKind == JsonValueKind.Array)
+                                    {
+                                        foreach (var phoneme in phonemesArray.EnumerateArray())
+                                        {
+                                            string phonemeIPA = phoneme.TryGetProperty("Phoneme", out var pProp) ? pProp.GetString() ?? "" : "";
+                                            double phonemeScore = 0;
+                                            
+                                            if (phoneme.TryGetProperty("PronunciationAssessment", out var phPaProp))
+                                            {
+                                                if (phPaProp.TryGetProperty("AccuracyScore", out var phAccProp) && phAccProp.ValueKind == JsonValueKind.Number)
+                                                    phonemeScore = phAccProp.GetDouble();
+                                            }
 
-                                    wordDetail.Phonemes.Add(phonemeDetail);
+                                            var phonemeDetail = new PhonemeDetail
+                                            {
+                                                Phoneme = phonemeIPA,
+                                                PhonemeDisplay = ConvertIPAToDisplay(phonemeIPA),
+                                                AccuracyScore = phonemeScore
+                                            };
+
+                                            if (phoneme.TryGetProperty("Offset", out var pOffset))
+                                                phonemeDetail.Offset = pOffset.GetInt32();
+                                            if (phoneme.TryGetProperty("Duration", out var pDuration))
+                                                phonemeDetail.Duration = pDuration.GetInt32();
+
+                                            // Classify phonemes
+                                            if (phonemeScore < 60)
+                                                problemPhonemes.Add(phonemeDetail.PhonemeDisplay);
+                                            else if (phonemeScore >= 85)
+                                                strongPhonemes.Add(phonemeDetail.PhonemeDisplay);
+
+                                            wordDetail.Phonemes.Add(phonemeDetail);
+                                        }
+                                    }
+
+                                    words.Add(wordDetail);
                                 }
                             }
-
-                            words.Add(wordDetail);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Azure detailed result does not contain NBest; returning overall scores only.");
                         }
                     }
 
